@@ -4,7 +4,7 @@
 
 ## 技术栈
 
-Next.js 14 | TypeScript | MySQL | NextAuth.js | Tailwind CSS | SimpleMDE
+Next.js 14 | TypeScript | MySQL | NextAuth.js | Tailwind CSS | Markdown
 
 ## 核心功能
 
@@ -18,7 +18,7 @@ Next.js 14 | TypeScript | MySQL | NextAuth.js | Tailwind CSS | SimpleMDE
 ### 后台
 - ✅ 管理员登录（JWT 认证）
 - ✅ 仪表板统计
-- ✅ 文章管理（CRUD + Markdown 编辑器）
+- ✅ 文章管理（CRUD + Markdown 编辑器，支持实时预览）
 - ✅ 分类管理
 - ✅ 评论审核
 

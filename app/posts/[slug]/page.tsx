@@ -34,6 +34,8 @@ interface CommentRow extends RowDataPacket {
 
 async function getPost(slug: string): Promise<Post | null> {
   try {
+    console.log('正在查询文章, slug:', slug);
+    
     const [rows] = await pool.query<PostWithCategory[]>(
       `SELECT p.*, c.name as category_name 
        FROM posts p 
@@ -42,7 +44,10 @@ async function getPost(slug: string): Promise<Post | null> {
       [slug]
     );
 
+    console.log('查询结果:', rows.length);
+    
     if (rows.length === 0) {
+      console.log('未找到文章');
       return null;
     }
 

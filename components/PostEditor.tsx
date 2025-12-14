@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { Post, Category } from '@/types';
-
-const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false });
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface PostEditorProps {
   post?: Post;
@@ -22,6 +21,7 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
   const [published, setPublished] = useState(post?.published || false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [previewMode, setPreviewMode] = useState<'edit' | 'preview' | 'split'>('split');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,10 +60,10 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
   };
 
   const generateSlug = () => {
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-      .replace(/^-|-$/g, '');
+    // 生成时间戳 + 随机数作为 slug，确保唯一性和 URL 安全
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 8);
+    const slug = `post-${timestamp}-${random}`;
     setSlug(slug);
   };
 
@@ -145,17 +145,94 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            内容 *
-          </label>
-          <SimpleMDE
-            value={content}
-            onChange={setContent}
-            options={{
-              spellChecker: false,
-              placeholder: '使用 Markdown 编写文章内容...',
-            }}
-          />
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              内容 * (支持 Markdown)
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPreviewMode('edit')}
+                className={`px-3 py-1 text-sm rounded ${
+                  previewMode === 'edit'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                编辑
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewMode('split')}
+                className={`px-3 py-1 text-sm rounded ${
+                  previewMode === 'split'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                分屏
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewMode('preview')}
+                className={`px-3 py-1 text-sm rounded ${
+                  previewMode === 'preview'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                预览
+              </button>
+            </div>
+          </div>
+          
+          <div className={`grid gap-4 ${
+            previewMode === 'split' ? 'grid-cols-2' : 'grid-cols-1'
+          }`}>
+            {(previewMode === 'edit' || previewMode === 'split') && (
+              <div>
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  required
+                  rows={20}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  placeholder="# 文章标题\n\n开始编写你的文章...\n\n## 二级标题\n\n- 列表项 1\n- 列表项 2\n\n**粗体** *斜体*\n\n```javascript\nconst hello = 'world';\n```"
+                />
+              </div>
+            )}
+            
+            {(previewMode === 'preview' || previewMode === 'split') && (
+              <div className="border border-gray-300 rounded-md p-4 bg-gray-50 overflow-auto" style={{ maxHeight: '500px' }}>
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {content || '*暂无内容*'}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="mt-2 text-xs text-gray-500">
+            <details>
+              <summary className="cursor-pointer hover:text-gray-700">Markdown 语法帮助</summary>
+              <div className="mt-2 p-3 bg-gray-50 rounded">
+                <code className="text-xs">
+                  # 一级标题<br/>
+                  ## 二级标题<br/>
+                  **粗体** *斜体*<br/>
+                  [链接](https://example.com)<br/>
+                  ![图片](url)<br/>
+                  - 列表<br/>
+                  1. 有序列表<br/>
+                  `代码`<br/>
+                  ```语言<br/>
+                  代码块<br/>
+                  ```
+                </code>
+              </div>
+            </details>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

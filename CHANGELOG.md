@@ -6,7 +6,7 @@
 
 **核心功能**
 - ✅ 文章管理系统（创建、编辑、删除、发布）
-- ✅ Markdown 编辑器（SimpleMDE）
+- ✅ Markdown 编辑器（原生 textarea + 实时预览，支持编辑/分屏/预览模式）
 - ✅ 分类管理
 - ✅ 评论系统（需审核）
 - ✅ 管理员认证（NextAuth.js + JWT）

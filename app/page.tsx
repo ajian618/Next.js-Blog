@@ -26,6 +26,8 @@ async function getPosts(): Promise<Post[]> {
        LIMIT 10`
     );
     
+    console.log('首页文章列表:', rows.map(r => ({ id: r.id, title: r.title, slug: r.slug })));
+    
     return rows.map(row => ({
       id: row.id,
       title: row.title,
