@@ -22,8 +22,10 @@ export interface Category {
 export interface Comment {
   id: number;
   post_id: number;
+  user_id?: number;
   author_name: string;
   author_email: string;
+  author_avatar?: string;
   content: string;
   created_at: string;
   approved: boolean;
@@ -33,5 +35,10 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  avatar?: string;
+  bio?: string;
+  role: 'user' | 'admin';
+  status: 'active' | 'banned';
   created_at: string;
+  updated_at: string;
 }

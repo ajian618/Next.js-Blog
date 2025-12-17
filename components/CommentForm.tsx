@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 interface CommentFormProps {
   postId: number;
@@ -9,6 +11,7 @@ interface CommentFormProps {
 
 export default function CommentForm({ postId }: CommentFormProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [content, setContent] = useState('');
@@ -28,8 +31,8 @@ export default function CommentForm({ postId }: CommentFormProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           post_id: postId,
-          author_name: name,
-          author_email: email,
+          author_name: session?.user ? session.user.name : name,
+          author_email: session?.user ? session.user.email : email,
           content,
         }),
       });
@@ -53,6 +56,29 @@ export default function CommentForm({ postId }: CommentFormProps) {
     }
   };
 
+  // 如果未登录，显示登录提示
+  if (!session?.user) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+        <p className="text-gray-700 mb-4">请登录后发表评论</p>
+        <div className="flex gap-3 justify-center">
+          <Link
+            href="/login"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            登录
+          </Link>
+          <Link
+            href="/register"
+            className="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50"
+          >
+            注册
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
@@ -67,32 +93,14 @@ export default function CommentForm({ postId }: CommentFormProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-            姓名 *
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      {/* 显示当前登录用户 */}
+      <div className="bg-gray-50 p-3 rounded-md flex items-center gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+          {session.user.name.charAt(0).toUpperCase()}
         </div>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            邮箱 *
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <p className="font-medium text-gray-900">{session.user.name}</p>
+          <p className="text-sm text-gray-500">{session.user.email}</p>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { Post } from '@/types';
 import { RowDataPacket } from 'mysql2';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import Navbar from '@/components/Navbar';
 
 interface PostWithCategory extends RowDataPacket {
   id: number;
@@ -51,22 +52,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">我的博客</h1>
-            <nav className="flex gap-6">
-              <Link href="/" className="text-gray-600 hover:text-gray-900">
-                首页
-              </Link>
-              <Link href="/admin/login" className="text-gray-600 hover:text-gray-900">
-                管理后台
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

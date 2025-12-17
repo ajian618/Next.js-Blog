@@ -28,10 +28,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex items-center gap-4">
               <Link
                 href="/"
-                target="_blank"
                 className="text-gray-600 hover:text-gray-900"
               >
-                查看网站
+                返回首页
+              </Link>
+              <Link
+                href="/profile"
+                className="text-gray-600 hover:text-gray-900"
+              >
+                个人中心
               </Link>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}

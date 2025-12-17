@@ -9,6 +9,9 @@ interface User extends RowDataPacket {
   email: string;
   password: string;
   name: string;
+  avatar?: string;
+  role: 'user' | 'admin';
+  status: 'active' | 'banned';
 }
 
 export const authOptions: NextAuthOptions = {
@@ -36,6 +39,11 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
+          // 检查用户状态
+          if (user.status === 'banned') {
+            throw new Error('账号已被禁用');
+          }
+
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
             user.password
@@ -49,6 +57,8 @@ export const authOptions: NextAuthOptions = {
             id: user.id.toString(),
             email: user.email,
             name: user.name,
+            avatar: user.avatar,
+            role: user.role,
           };
         } catch (error) {
           console.error('Auth error:', error);
@@ -61,18 +71,22 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
+        token.avatar = user.avatar;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.role = token.role as 'user' | 'admin';
+        session.user.avatar = token.avatar as string | undefined;
       }
       return session;
     },
   },
   pages: {
-    signIn: '/admin/login',
+    signIn: '/login',
   },
   session: {
     strategy: 'jwt',

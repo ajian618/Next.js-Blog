@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CommentForm from '@/components/CommentForm';
 import CommentList from '@/components/CommentList';
+import Navbar from '@/components/Navbar';
 
 interface PostWithCategory extends RowDataPacket {
   id: number;
@@ -25,8 +26,10 @@ interface PostWithCategory extends RowDataPacket {
 interface CommentRow extends RowDataPacket {
   id: number;
   post_id: number;
+  user_id?: number;
   author_name: string;
   author_email: string;
+  author_avatar?: string;
   content: string;
   created_at: Date;
   approved: boolean;
@@ -73,15 +76,21 @@ async function getPost(slug: string): Promise<Post | null> {
 async function getComments(postId: number): Promise<Comment[]> {
   try {
     const [rows] = await pool.query<CommentRow[]>(
-      'SELECT * FROM comments WHERE post_id = ? AND approved = TRUE ORDER BY created_at DESC',
+      `SELECT c.*, u.avatar as author_avatar 
+       FROM comments c
+       LEFT JOIN users u ON c.user_id = u.id
+       WHERE c.post_id = ? AND c.approved = TRUE 
+       ORDER BY c.created_at DESC`,
       [postId]
     );
 
     return rows.map(row => ({
       id: row.id,
       post_id: row.post_id,
+      user_id: row.user_id,
       author_name: row.author_name,
       author_email: row.author_email,
+      author_avatar: row.author_avatar,
       content: row.content,
       created_at: row.created_at.toISOString(),
       approved: row.approved,
@@ -103,14 +112,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <Link href="/" className="text-blue-600 hover:text-blue-800">
-            ← 返回首页
-          </Link>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Article */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
