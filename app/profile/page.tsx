@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useEffect, useState, useCallback } from 'react';
+import { useSession, getSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getAvatarUrl } from '@/lib/image-utils';
 
 interface UserProfile {
   id: number;
@@ -13,6 +14,10 @@ interface UserProfile {
   bio?: string;
   role: 'user' | 'admin';
   created_at: string;
+  pending_name?: string;
+  pending_avatar?: string;
+  review_status?: 'pending' | 'approved' | 'rejected';
+  review_notes?: string;
 }
 
 export default function ProfilePage() {
@@ -29,7 +34,14 @@ export default function ProfilePage() {
     newPassword: '',
     confirmPassword: '',
   });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  
+  // 跟踪新上传的头像 URL（用于取消时删除）
+  const [newUploadedAvatarUrl, setNewUploadedAvatarUrl] = useState<string>('');
+  // 跟踪是否有未保存的修改
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -45,15 +57,24 @@ export default function ProfilePage() {
       const result = await response.json();
       
       if (response.ok && result.success) {
-        setProfile(result.data);
+        const profileData = result.data;
+        setProfile(profileData);
         setFormData({
-          name: result.data.name,
-          bio: result.data.bio || '',
-          avatar: result.data.avatar || '',
+          name: profileData.name,
+          bio: profileData.bio || '',
+          avatar: profileData.avatar || '',
           currentPassword: '',
           newPassword: '',
           confirmPassword: '',
         });
+        
+        // 更新 session 中的头像信息（通过重新登录触发 session 更新）
+        if (session && profileData.avatar !== session.user.avatar) {
+          await signIn('credentials', { 
+            redirect: false,
+            email: session.user.email,
+          });
+        }
       }
     } catch (error) {
       console.error('获取用户信息失败:', error);
@@ -62,11 +83,59 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) {
+      setMessage({ type: 'error', text: '请选择要上传的图片文件' });
+      return;
+    }
+
+    if (avatarFile.size > 2 * 1024 * 1024) {
+      setMessage({ type: 'error', text: '文件大小不能超过2MB' });
+      return;
+    }
+
+    if (!avatarFile.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: '请选择图片文件' });
+      return;
+    }
+
+    setUploading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const formData = new FormData();
+      formData.append('file', avatarFile);
+      formData.append('type', 'avatar');
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setFormData(prev => ({ ...prev, avatar: result.url }));
+        setNewUploadedAvatarUrl(result.url);
+        setMessage({ type: 'success', text: '头像上传成功！' });
+        setAvatarFile(null);
+        setHasUnsavedChanges(true);
+      } else {
+        setMessage({ type: 'error', text: result.error || '上传失败' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: '上传失败，请稍后重试' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
 
-    // 如果要修改密码，验证新密码
+    if (!profile) return;
+
     if (formData.newPassword) {
       if (formData.newPassword !== formData.confirmPassword) {
         setMessage({ type: 'error', text: '两次输入的密码不一致' });
@@ -79,38 +148,159 @@ export default function ProfilePage() {
     }
 
     try {
-      const response = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          bio: formData.bio,
-          avatar: formData.avatar,
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage({ type: 'success', text: '更新成功！' });
-        setEditing(false);
-        fetchProfile();
-        // 清空密码字段
-        setFormData({
-          ...formData,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: '',
+      if (formData.newPassword) {
+        const passwordResponse = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            currentPassword: formData.currentPassword,
+            newPassword: formData.newPassword,
+          }),
         });
-      } else {
-        setMessage({ type: 'error', text: data.error || '更新失败' });
+
+        if (!passwordResponse.ok) {
+          const data = await passwordResponse.json();
+          setMessage({ type: 'error', text: data.error || '密码修改失败' });
+          return;
+        }
       }
+
+      const hasNameChange = formData.name !== profile.name;
+      const hasAvatarChange = formData.avatar !== profile.avatar;
+      const hasBioChange = formData.bio !== profile.bio;
+
+      const isAdmin = profile.role === 'admin';
+
+      if (hasNameChange || hasAvatarChange || hasBioChange) {
+        if (isAdmin) {
+          const updateData: any = {};
+          if (hasNameChange) updateData.name = formData.name;
+          if (hasAvatarChange) updateData.avatar = formData.avatar;
+          if (hasBioChange) updateData.bio = formData.bio;
+
+          const updateResponse = await fetch('/api/user/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData),
+          });
+
+          if (updateResponse.ok) {
+            setMessage({ type: 'success', text: '资料更新成功！' });
+            setEditing(false);
+            setHasUnsavedChanges(false);
+            setNewUploadedAvatarUrl('');
+            if (session && formData.avatar !== session.user.avatar) {
+              await signIn('credentials', { 
+                redirect: false,
+                email: session.user.email,
+              });
+            }
+            fetchProfile();
+          } else {
+            const data = await updateResponse.json();
+            setMessage({ type: 'error', text: data.error || '更新失败' });
+          }
+        } else {
+          const reviewData: any = {};
+          if (hasNameChange) reviewData.name = formData.name;
+          if (hasAvatarChange) reviewData.avatar = formData.avatar;
+
+          const reviewResponse = await fetch('/api/user/profile/review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reviewData),
+          });
+
+          const result = await reviewResponse.json();
+
+          if (reviewResponse.ok) {
+            setMessage({ type: 'success', text: '资料修改已提交审核，管理员通过后生效' });
+            setEditing(false);
+            setHasUnsavedChanges(false);
+            setNewUploadedAvatarUrl('');
+            fetchProfile();
+          } else {
+            setMessage({ type: 'error', text: result.error || '提交审核失败' });
+          }
+        }
+      } else {
+        setEditing(false);
+      }
+
+      // 清空密码字段
+      setFormData({
+        ...formData,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
     } catch (error) {
       setMessage({ type: 'error', text: '更新失败，请稍后重试' });
     }
   };
+
+  const deleteUnsavedAvatar = useCallback(async () => {
+    if (newUploadedAvatarUrl) {
+      try {
+        await fetch('/api/delete-image', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: newUploadedAvatarUrl }),
+        });
+        console.log('已删除未保存的头像:', newUploadedAvatarUrl);
+      } catch (error) {
+        console.error('删除未保存的头像失败:', error);
+      }
+      setNewUploadedAvatarUrl('');
+    }
+  }, [newUploadedAvatarUrl]);
+
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      if (confirm('您有未保存的修改，确定要放弃吗？新上传的头像将被删除。')) {
+        deleteUnsavedAvatar();
+        setEditing(false);
+        setMessage({ type: '', text: '' });
+        if (profile) {
+          setFormData({
+            name: profile.name,
+            bio: profile.bio || '',
+            avatar: profile.avatar || '',
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: '',
+          });
+        }
+        setHasUnsavedChanges(false);
+      }
+    } else {
+      setEditing(false);
+      setMessage({ type: '', text: '' });
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (editing && newUploadedAvatarUrl && hasUnsavedChanges) {
+        deleteUnsavedAvatar();
+      }
+    };
+  }, [editing, newUploadedAvatarUrl, hasUnsavedChanges, deleteUnsavedAvatar]);
+
+  useEffect(() => {
+    if (profile) {
+      const nameChanged = formData.name !== profile.name;
+      const bioChanged = formData.bio !== profile.bio;
+      const avatarChanged = formData.avatar !== profile.avatar;
+      const passwordChanged = formData.newPassword !== '';
+      
+      if (nameChanged || bioChanged || avatarChanged || passwordChanged) {
+        setHasUnsavedChanges(true);
+      } else {
+        setHasUnsavedChanges(false);
+      }
+    }
+  }, [formData.name, formData.bio, formData.avatar, formData.newPassword, profile]);
 
   if (loading || status === 'loading') {
     return (
@@ -126,15 +316,11 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">个人中心</h1>
-            <Link
-              href="/"
-              className="text-gray-600 hover:text-gray-900"
-            >
+            <Link href="/" className="text-gray-600 hover:text-gray-900">
               返回首页
             </Link>
           </div>
@@ -143,13 +329,31 @@ export default function ProfilePage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white shadow rounded-lg">
-          {/* 用户信息头部 */}
           <div className="px-6 py-8 border-b border-gray-200">
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-4">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                  {profile.name.charAt(0).toUpperCase()}
-                </div>
+                {profile.review_status === 'pending' && profile.pending_avatar ? (
+                  <div className="relative">
+                    <img 
+                      src={getAvatarUrl(profile.pending_avatar, 80) || undefined} 
+                      alt="待审核头像"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-yellow-400"
+                    />
+                    <span className="absolute bottom-0 right-0 bg-yellow-500 text-white text-xs px-1.5 py-0.5 rounded-full border-2 border-white">
+                      待审核
+                    </span>
+                  </div>
+                ) : profile.avatar ? (
+                  <img 
+                    src={getAvatarUrl(profile.avatar, 80) || undefined} 
+                    alt={profile.name}
+                    className="w-20 h-20 rounded-full object-cover border border-gray-200"
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                    {profile.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
                   <p className="text-gray-600">{profile.email}</p>
@@ -179,9 +383,34 @@ export default function ProfilePage() {
             {profile.bio && !editing && (
               <p className="mt-4 text-gray-700">{profile.bio}</p>
             )}
+            
+            {profile.review_status === 'pending' && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  <strong>审核中：</strong>您的资料修改正在等待管理员审核，通过后将自动更新。
+                </p>
+                {profile.pending_name && (
+                  <p className="text-xs text-yellow-700 mt-1">
+                    待审核用户名：{profile.pending_name}
+                  </p>
+                )}
+                {profile.pending_avatar && (
+                  <p className="text-xs text-yellow-700 mt-1">
+                    待审核头像已上传
+                  </p>
+                )}
+              </div>
+            )}
+
+            {profile.review_status === 'rejected' && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">
+                  <strong>审核未通过：</strong>{profile.review_notes || '资料修改被拒绝'}
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* 管理员快捷入口 */}
           {profile.role === 'admin' && (
             <div className="px-6 py-4 bg-purple-50 border-b border-gray-200">
               <h3 className="text-sm font-medium text-purple-900 mb-3">管理员功能</h3>
@@ -208,7 +437,6 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* 编辑表单 */}
           {editing && (
             <div className="px-6 py-6">
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -223,9 +451,7 @@ export default function ProfilePage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    用户名
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">用户名</label>
                   <input
                     type="text"
                     value={formData.name}
@@ -236,9 +462,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    个人简介
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">个人简介</label>
                   <textarea
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
@@ -249,26 +473,46 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    头像URL
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.avatar}
-                    onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="https://example.com/avatar.jpg"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">头像上传</label>
+                  <div className="flex gap-3 items-center">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAvatarUpload}
+                      disabled={!avatarFile || uploading}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {uploading ? '上传中...' : '上传'}
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    支持 JPG, PNG, GIF 格式，文件大小不超过 2MB
+                  </p>
+                  {formData.avatar && (
+                    <div className="mt-3">
+                      <p className="text-xs text-gray-500 mb-1">当前头像：</p>
+                      <img 
+                        src={getAvatarUrl(formData.avatar, 100) || undefined}
+                        alt="当前头像"
+                        className="w-16 h-16 rounded-full object-cover border"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">修改密码</h3>
-                  
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        当前密码
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
                       <input
                         type="password"
                         value={formData.currentPassword}
@@ -276,11 +520,8 @@ export default function ProfilePage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        新密码
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">新密码</label>
                       <input
                         type="password"
                         value={formData.newPassword}
@@ -289,11 +530,8 @@ export default function ProfilePage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        确认新密码
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
                       <input
                         type="password"
                         value={formData.confirmPassword}
@@ -314,18 +552,7 @@ export default function ProfilePage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setEditing(false);
-                      setMessage({ type: '', text: '' });
-                      setFormData({
-                        name: profile.name,
-                        bio: profile.bio || '',
-                        avatar: profile.avatar || '',
-                        currentPassword: '',
-                        newPassword: '',
-                        confirmPassword: '',
-                      });
-                    }}
+                    onClick={handleCancel}
                     className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
                   >
                     取消

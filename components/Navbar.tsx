@@ -3,9 +3,16 @@
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
+import { getAvatarUrl } from '@/lib/image-utils';
+
+// 用户数据接口
+interface UserData {
+  avatar?: string;
+  name: string;
+}
 
 // 简化的用户菜单组件
-function UserMenu({ session, onSignOut }: { session: any; onSignOut: () => void }) {
+function UserMenu({ session, userData, onSignOut }: { session: any; userData: UserData; onSignOut: () => void }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -20,16 +27,28 @@ function UserMenu({ session, onSignOut }: { session: any; onSignOut: () => void 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // 优先使用最新的用户数据头像，否则使用 session 头像
+  const currentAvatar = userData.avatar || session.user.avatar;
+  const avatarUrl = getAvatarUrl(currentAvatar, 32);
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown(!showDropdown)}
         className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
       >
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-          {session.user.name.charAt(0).toUpperCase()}
-        </div>
-        <span className="hidden md:inline font-medium">{session.user.name}</span>
+        {avatarUrl ? (
+          <img 
+            src={avatarUrl} 
+            alt={session.user.name}
+            className="w-8 h-8 rounded-full object-cover border border-gray-200"
+          />
+        ) : (
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            {session.user.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <span className="hidden md:inline font-medium">{userData.name || session.user.name}</span>
         <svg
           className={`w-4 h-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`}
           fill="none"
@@ -81,6 +100,37 @@ function UserMenu({ session, onSignOut }: { session: any; onSignOut: () => void 
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const [userData, setUserData] = useState<UserData>({ name: '' });
+  
+  // 优化：使用更短的加载超时
+  const isLoading = status === 'loading';
+
+  // 获取最新的用户信息
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (session?.user?.id) {
+        try {
+          const response = await fetch('/api/user/profile');
+          const result = await response.json();
+          if (result.success && result.data) {
+            setUserData({
+              avatar: result.data.avatar,
+              name: result.data.name
+            });
+          }
+        } catch (err) {
+          console.error('获取用户信息失败:', err);
+        }
+      }
+    };
+
+    fetchUserData();
+
+    // 每分钟刷新一次用户数据，确保头像更新能及时显示
+    const interval = setInterval(fetchUserData, 60000);
+
+    return () => clearInterval(interval);
+  }, [session?.user?.id]);
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
@@ -95,11 +145,14 @@ export default function Navbar() {
               首页
             </Link>
             
-            {status === 'loading' ? (
-              <div className="text-gray-400 animate-pulse">加载中...</div>
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+              </div>
             ) : session?.user ? (
               <UserMenu 
-                session={session} 
+                session={session}
+                userData={userData}
                 onSignOut={() => signOut({ callbackUrl: '/' })}
               />
             ) : (

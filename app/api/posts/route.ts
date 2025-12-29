@@ -4,23 +4,12 @@ import { authOptions } from '@/lib/auth';
 import { PostRepository } from '@/lib/repositories/post-repository';
 import { ApiResponse, withErrorHandling } from '@/lib/api-response';
 
-// 简单的内存缓存
-const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 30 * 1000; // 30秒
-
 const postRepository = new PostRepository();
 
 // GET /api/posts - 获取文章列表
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
   const published = searchParams.get('published');
-  const cacheKey = `posts_${published}`;
-  
-  // 检查缓存
-  const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return ApiResponse.success(cached.data, '获取文章列表成功');
-  }
 
   let rows: any[];
   
@@ -29,9 +18,6 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   } else {
     rows = await postRepository.getAllPosts();
   }
-
-  // 设置缓存
-  cache.set(cacheKey, { data: rows, timestamp: Date.now() });
 
   return ApiResponse.success(rows, '获取文章列表成功');
 });
@@ -62,8 +48,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return ApiResponse.conflict('URL别名已存在，请使用其他别名');
   }
 
-  // 清理缓存
-  cache.clear();
 
   const postId = await postRepository.create({
     title,

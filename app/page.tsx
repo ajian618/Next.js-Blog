@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import Navbar from '../components/Navbar';
 import { PostList } from '../components/PostList';
 
@@ -9,20 +8,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <Suspense fallback={
-          <div className="space-y-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
-                <div className="h-8 bg-gray-200 rounded w-3/4 mb-3"></div>
-                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            ))}
-          </div>
-        }>
-          <PostList />
-        </Suspense>
+        <PostList />
       </main>
 
       {/* Footer */}

@@ -92,6 +92,25 @@ export class UserRepository extends Repository<User> {
     return (rows as any[])[0] || null;
   }
 
+  // 根据 ID 查找用户（仅返回必要字段，用于认证和 session 更新）
+  async findAuthUserById(id: number): Promise<{
+    id: number;
+    email: string;
+    password: string;
+    name: string;
+    avatar?: string;
+    role: 'user' | 'admin';
+    status: 'active' | 'banned';
+  } | null> {
+    const query = `
+      SELECT id, email, password, name, avatar, role, status 
+      FROM users 
+      WHERE id = ?
+    `;
+    const [rows] = await this.pool.query(query, [id]);
+    return (rows as any[])[0] || null;
+  }
+
   // 检查邮箱是否已存在
   async checkEmailExists(email: string, excludeId?: number): Promise<boolean> {
     let query = 'SELECT id FROM users WHERE email = ?';

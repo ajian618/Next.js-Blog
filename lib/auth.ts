@@ -4,26 +4,12 @@ import bcrypt from 'bcryptjs';
 import { UserRepository } from './repositories/user-repository';
 import { ApiResponse } from './api-response';
 
-// 简单的内存缓存，减少数据库查询
-const userCache = new Map<string, { user: any; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5分钟
-
 const userRepository = new UserRepository();
 
-async function getUserFromCache(email: string) {
-  const cached = userCache.get(email);
-  
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.user;
-  }
-
+// 从数据库获取用户信息（不使用缓存，确保获取最新数据）
+async function getUserById(id: string) {
   try {
-    const user = await userRepository.findAuthUser(email);
-    
-    if (user) {
-      userCache.set(email, { user, timestamp: Date.now() });
-    }
-    
+    const user = await userRepository.findAuthUserById(parseInt(id));
     return user;
   } catch (error) {
     console.error('Database query error:', error);
@@ -44,7 +30,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await getUserFromCache(credentials.email);
+        const user = await userRepository.findAuthUser(credentials.email);
         
         if (!user) {
           return null;
@@ -55,7 +41,6 @@ export const authOptions: NextAuthOptions = {
           throw new Error('账号已被禁用');
         }
 
-        // 使用缓存的密码验证，避免重复查询
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.password
@@ -77,14 +62,29 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // 首次登录时存储用户信息
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.avatar = user.avatar;
-        // 添加时间戳用于缓存失效
-        token.iat = Math.floor(Date.now() / 1000);
+        return token;
       }
+
+      // 当 session 更新时（如调用 getSession()），从数据库重新获取最新用户信息
+      if (trigger === 'update' || token.iat) {
+        try {
+          const dbUser = await getUserById(token.id as string);
+          if (dbUser) {
+            token.name = dbUser.name;
+            token.avatar = dbUser.avatar;
+            token.role = dbUser.role;
+          }
+        } catch (error) {
+          console.error('Failed to refresh user data:', error);
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

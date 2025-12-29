@@ -12,6 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/posts', label: '文章管理', icon: '📝' },
     { href: '/admin/categories', label: '分类管理', icon: '🏷️' },
     { href: '/admin/comments', label: '评论管理', icon: '💬' },
+    { href: '/admin/profile-reviews', label: '资料审核', icon: '👤' },
   ];
 
   return (

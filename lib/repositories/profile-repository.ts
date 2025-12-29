@@ -10,6 +10,10 @@ interface ProfileRow extends RowDataPacket {
   bio?: string;
   role: 'user' | 'admin';
   status: 'active' | 'banned';
+  pending_name?: string;
+  pending_avatar?: string;
+  review_status: 'pending' | 'approved' | 'rejected';
+  review_notes?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -18,6 +22,10 @@ interface UpdateProfileData {
   name?: string;
   avatar?: string;
   bio?: string;
+  pending_name?: string;
+  pending_avatar?: string;
+  review_status?: 'pending' | 'approved' | 'rejected';
+  review_notes?: string;
 }
 
 export class ProfileRepository extends Repository<User> {
@@ -63,10 +71,12 @@ export class ProfileRepository extends Repository<User> {
     return result.affectedRows > 0;
   }
 
-  // 获取用户资料（不包含密码）
-  async getProfile(id: number): Promise<User | null> {
+  // 获取用户资料（不包含密码，包含审核状态）
+  async getProfile(id: number): Promise<any> {
     const query = `
-      SELECT id, email, name, avatar, bio, role, status, created_at, updated_at
+      SELECT id, email, name, avatar, bio, role, status, 
+             pending_name, pending_avatar, review_status, review_notes,
+             created_at, updated_at
       FROM users 
       WHERE id = ?
     `;
@@ -84,6 +94,10 @@ export class ProfileRepository extends Repository<User> {
       bio: row.bio,
       role: row.role,
       status: row.status,
+      pending_name: row.pending_name,
+      pending_avatar: row.pending_avatar,
+      review_status: row.review_status,
+      review_notes: row.review_notes,
       created_at: new Date(row.created_at).toISOString(),
       updated_at: new Date(row.updated_at).toISOString()
     };
@@ -107,6 +121,7 @@ export class ProfileRepository extends Repository<User> {
     const updates: string[] = [];
     const values: any[] = [];
 
+    // 普通字段直接更新
     if (data.name !== undefined) {
       updates.push('name = ?');
       values.push(data.name);
@@ -120,6 +135,24 @@ export class ProfileRepository extends Repository<User> {
       values.push(data.bio);
     }
 
+    // 审核相关字段
+    if (data.pending_name !== undefined) {
+      updates.push('pending_name = ?');
+      values.push(data.pending_name);
+    }
+    if (data.pending_avatar !== undefined) {
+      updates.push('pending_avatar = ?');
+      values.push(data.pending_avatar);
+    }
+    if (data.review_status !== undefined) {
+      updates.push('review_status = ?');
+      values.push(data.review_status);
+    }
+    if (data.review_notes !== undefined) {
+      updates.push('review_notes = ?');
+      values.push(data.review_notes);
+    }
+
     if (updates.length === 0) {
       return false;
     }
@@ -131,6 +164,77 @@ export class ProfileRepository extends Repository<User> {
     );
 
     return result.affectedRows > 0;
+  }
+
+  // 提交资料修改请求（放入待审核队列）
+  async submitProfileReview(id: number, data: { name?: string; avatar?: string }): Promise<boolean> {
+    const updates: string[] = ['review_status = ?'];
+    const values: any[] = ['pending'];
+
+    if (data.name !== undefined) {
+      updates.push('pending_name = ?');
+      values.push(data.name);
+    }
+    if (data.avatar !== undefined) {
+      updates.push('pending_avatar = ?');
+      values.push(data.avatar);
+    }
+
+    if (updates.length === 1) {
+      return false;
+    }
+
+    values.push(id);
+    const [result] = await this.pool.query<ResultSetHeader>(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    return result.affectedRows > 0;
+  }
+
+  // 管理员审核通过
+  async approveProfile(id: number): Promise<boolean> {
+    const query = `
+      UPDATE users 
+      SET 
+        name = COALESCE(pending_name, name),
+        avatar = COALESCE(pending_avatar, avatar),
+        pending_name = NULL,
+        pending_avatar = NULL,
+        review_status = 'approved',
+        review_notes = NULL
+      WHERE id = ?
+    `;
+    const [result] = await this.pool.query<ResultSetHeader>(query, [id]);
+    return result.affectedRows > 0;
+  }
+
+  // 管理员审核拒绝
+  async rejectProfile(id: number, notes?: string): Promise<boolean> {
+    const query = `
+      UPDATE users 
+      SET 
+        pending_name = NULL,
+        pending_avatar = NULL,
+        review_status = 'rejected',
+        review_notes = ?
+      WHERE id = ?
+    `;
+    const [result] = await this.pool.query<ResultSetHeader>(query, [notes || '资料修改被拒绝', id]);
+    return result.affectedRows > 0;
+  }
+
+  // 获取待审核的用户列表
+  async getPendingReviews(): Promise<any[]> {
+    const query = `
+      SELECT id, email, name, pending_name, pending_avatar, review_status, review_notes, created_at
+      FROM users 
+      WHERE review_status = 'pending'
+      ORDER BY created_at DESC
+    `;
+    const [rows] = await this.pool.query(query);
+    return rows as any[];
   }
 
   // 更新密码

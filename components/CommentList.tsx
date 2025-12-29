@@ -1,6 +1,7 @@
 import { Comment } from '@/types';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { getAvatarUrl } from '@/lib/image-utils';
 
 interface CommentListProps {
   comments: Comment[];
@@ -22,7 +23,7 @@ export default function CommentList({ comments }: CommentListProps) {
           <div className="flex items-center gap-3 mb-2">
             {comment.author_avatar ? (
               <img
-                src={comment.author_avatar}
+                src={getAvatarUrl(comment.author_avatar, 40) || comment.author_avatar}
                 alt={comment.author_name}
                 className="w-10 h-10 rounded-full object-cover"
               />

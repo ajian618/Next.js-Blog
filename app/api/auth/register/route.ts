@@ -8,12 +8,11 @@ const userRepository = new UserRepository();
 // POST /api/auth/register - 用户注册
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const body = await request.json();
-  const { name, email, password } = body;
+  const { email, password } = body;
 
   // 参数验证
-  if (!name || !email || !password) {
+  if (!email || !password) {
     return ApiResponse.validationError({
-      name: !name ? '姓名不能为空' : undefined,
       email: !email ? '邮箱不能为空' : undefined,
       password: !password ? '密码不能为空' : undefined
     });
@@ -36,12 +35,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return ApiResponse.conflict('该邮箱已被注册');
   }
 
+  // 生成随机昵称
+  const randomName = `用户${Math.random().toString(36).substring(2, 8)}`;
+
   // 哈希密码
   const hashedPassword = await bcrypt.hash(password, 12);
 
   // 创建用户
   const userId = await userRepository.create({
-    name,
+    name: randomName,
     email,
     password: hashedPassword,
     role: 'user',
@@ -49,7 +51,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   } as any);
 
   return ApiResponse.created(
-    { id: userId, name, email, role: 'user' },
-    '注册成功'
+    { id: userId, name: randomName, email, role: 'user' },
+    '注册成功，请完善个人资料'
   );
 });

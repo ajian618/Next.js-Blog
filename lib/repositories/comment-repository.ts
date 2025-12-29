@@ -29,13 +29,13 @@ interface UpdateCommentData {
 
 export class CommentRepository extends Repository<Comment> {
   constructor() {
+    // 注意：comments表没有author_avatar字段，所以不包含在基础字段中
     super('comments', [
       'id',
       'post_id',
       'user_id',
       'author_name',
       'author_email',
-      'author_avatar',
       'content',
       'created_at',
       'approved'
@@ -44,35 +44,59 @@ export class CommentRepository extends Repository<Comment> {
 
   // 获取文章的所有已审核评论
   async getApprovedCommentsByPost(postId: number): Promise<Comment[]> {
+    // 从 users 表实时获取最新的用户名和头像
     const query = `
-      ${this.selectQuery} 
-      WHERE post_id = ? AND approved = TRUE 
-      ORDER BY created_at DESC
+      SELECT 
+        c.id, c.post_id, c.user_id, c.author_email, 
+        c.content, c.created_at, c.approved,
+        COALESCE(u.name, c.author_name) as author_name,
+        u.avatar as author_avatar
+      FROM comments c
+      LEFT JOIN users u ON c.user_id = u.id
+      WHERE c.post_id = ? AND c.approved = TRUE 
+      ORDER BY c.created_at DESC
     `;
     const [rows] = await this.pool.query(query, [postId]);
-    return (rows as CommentRow[]).map(row => ({
+    return (rows as any[]).map(row => ({
       id: row.id,
       post_id: row.post_id,
       user_id: row.user_id,
-      author_name: row.author_name,
+      author_name: row.author_name, // 优先使用 users 表中的最新名称
       author_email: row.author_email,
-      author_avatar: row.author_avatar,
+      author_avatar: row.author_avatar, // 从 users 表获取最新头像
       content: row.content,
       created_at: row.created_at.toISOString(),
       approved: row.approved
     }));
   }
 
-  // 获取所有评论（管理后台用，带文章标题）
+  // 获取所有评论（管理后台用，带文章标题和用户头像）
   async getAllCommentsWithPostTitle(): Promise<(Comment & { post_title: string })[]> {
     const query = `
-      SELECT c.*, p.title as post_title
+      SELECT 
+        c.id, c.post_id, c.user_id, c.author_email, 
+        c.content, c.created_at, c.approved,
+        p.title as post_title,
+        COALESCE(u.name, c.author_name) as author_name,
+        u.avatar as author_avatar
       FROM comments c
       LEFT JOIN posts p ON c.post_id = p.id
+      LEFT JOIN users u ON c.user_id = u.id
       ORDER BY c.created_at DESC
     `;
     const [rows] = await this.pool.query(query);
-    return rows as any[];
+    return (rows as any[]).map(row => ({
+      id: row.id,
+      post_id: row.post_id,
+      user_id: row.user_id,
+      author_name: row.author_name, // 优先使用 users 表中的最新名称
+      author_email: row.author_email,
+      author_avatar: row.author_avatar,
+      content: row.content,
+      created_at: row.created_at.toISOString(),
+      approved: row.approved,
+      post_title: row.post_title
+    }));
   }
 
   // 获取待审核评论数量
