@@ -9,9 +9,24 @@ const profileRepository = new ProfileRepository();
 
 // 获取用户信息
 export async function GET(request: NextRequest) {
-  return withErrorHandling(async () => {
+  return withErrorHandling(async (req: NextRequest) => {
     const session = await getServerSession(authOptions);
     
+    // 检查是否要获取指定角色的用户信息（用于获取管理员信息显示在首页）
+    const roleParam = req.nextUrl.searchParams.get('role');
+    
+    if (roleParam === 'admin') {
+      // 获取管理员用户信息（用于首页展示）
+      const adminProfile = await profileRepository.getProfileByRole('admin');
+      
+      if (!adminProfile) {
+        return ApiResponse.notFound('管理员用户不存在');
+      }
+
+      return ApiResponse.success(adminProfile, '获取管理员信息成功');
+    }
+    
+    // 默认获取当前登录用户信息
     if (!session?.user) {
       return ApiResponse.unauthorized('未登录');
     }

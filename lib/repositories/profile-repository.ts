@@ -117,6 +117,32 @@ export class ProfileRepository extends Repository<User> {
     return null;
   }
 
+  // 根据角色获取用户资料（用于获取管理员信息）
+  async getProfileByRole(role: string): Promise<any> {
+    const query = `
+      SELECT id, name, avatar, bio, role, status, created_at, updated_at
+      FROM users 
+      WHERE role = ? AND status = 'active'
+      LIMIT 1
+    `;
+    const result = await this.pool.query(query, [role]);
+    const rows = result[0] as any[];
+    
+    if (!rows || rows.length === 0) return null;
+    
+    const row = rows[0];
+    return {
+      id: row.id,
+      name: row.name,
+      avatar: row.avatar,
+      bio: row.bio,
+      role: row.role,
+      status: row.status,
+      created_at: new Date(row.created_at).toISOString(),
+      updated_at: new Date(row.updated_at).toISOString()
+    };
+  }
+
   async updateProfile(id: number, data: UpdateProfileData): Promise<boolean> {
     const updates: string[] = [];
     const values: any[] = [];

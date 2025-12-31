@@ -39,9 +39,9 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h1 className="text-center text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-center text-2xl font-bold text-gray-900 mb-2 tracking-wide" style={{ letterSpacing: '0.05em' }}>
           欢迎回来
         </h1>
         <p className="text-center text-gray-600">
@@ -50,16 +50,16 @@ function LoginForm() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white border border-gray-200 py-10 px-8 shadow-sm rounded-lg">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm animate-fade-in">
+              <div className="bg-red-50 border border-red-200 text-red-700 p-3 text-sm animate-fade-in tracking-wide rounded">
                 {error}
               </div>
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5 tracking-wide">
                 邮箱地址
               </label>
               <input
@@ -69,14 +69,14 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isPending}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:bg-gray-100"
+                className="block w-full px-4 py-2.5 bg-white border border-gray-300 text-gray-900 focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors tracking-wide rounded"
                 placeholder="your@email.com"
                 autoComplete="email"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5 tracking-wide">
                 密码
               </label>
               <input
@@ -86,8 +86,8 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isPending}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:bg-gray-100"
-                placeholder="••••••••"
+                className="block w-full px-4 py-2.5 bg-white border border-gray-300 text-gray-900 focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors tracking-wide rounded"
+                placeholder="•••••••"
                 autoComplete="current-password"
               />
             </div>
@@ -96,11 +96,11 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full flex justify-center py-2.5 px-4 border border-[var(--accent-primary)] text-white bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] hover:border-[var(--accent-hover)] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors tracking-wide font-medium rounded"
               >
                 {isPending ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-none animate-spin"></span>
                     登录中...
                   </span>
                 ) : (
@@ -113,17 +113,17 @@ function LoginForm() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">或</span>
+                <span className="px-3 bg-white text-gray-500">或</span>
               </div>
             </div>
 
             <div className="mt-6 text-center">
               <Link
                 href="/register"
-                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                className="font-medium text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors tracking-wide"
               >
                 还没有账户？立即注册
               </Link>
@@ -132,7 +132,7 @@ function LoginForm() {
             <div className="mt-4 text-center">
               <Link
                 href="/"
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm text-gray-500 hover:text-gray-700 transition-colors tracking-wide"
               >
                 ← 返回首页
               </Link>
@@ -146,7 +146,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">加载中...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center text-gray-500">加载中...</div>}>
       <LoginForm />
     </Suspense>
   );

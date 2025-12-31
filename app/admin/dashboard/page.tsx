@@ -152,11 +152,11 @@ export default async function DashboardPage() {
             </div>
             <div className="flex justify-between py-2 border-b">
               <span className="text-gray-600">系统版本</span>
-              <span className="font-medium">v1.0.0</span>
+              <span className="font-medium">v1.3.1</span>
             </div>
             <div className="flex justify-between py-2">
               <span className="text-gray-600">Next.js 版本</span>
-              <span className="font-medium">14.0.0</span>
+              <span className="font-medium">v14.2.35</span>
             </div>
           </div>
         </div>

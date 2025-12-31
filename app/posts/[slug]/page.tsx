@@ -4,10 +4,10 @@ import { PostRepository } from '@/lib/repositories/post-repository';
 import { CommentRepository } from '@/lib/repositories/comment-repository';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-// Tiptap 生成的是 HTML，不需要 Markdown 渲染器
 import CommentForm from '@/components/CommentForm';
 import CommentList from '@/components/CommentList';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const postRepository = new PostRepository();
 const commentRepository = new CommentRepository();
@@ -43,45 +43,80 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const comments = await getComments(post.id);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       <Navbar />
 
-      {/* Article */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <article className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <header className="mb-8">
-            <div className="flex items-center gap-3 text-sm text-gray-500 mb-4">
-              {post.category_name && (
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                  {post.category_name}
-                </span>
-              )}
-              <time dateTime={post.created_at}>
-                {format(new Date(post.created_at), 'yyyy年MM月dd日', { locale: zhCN })}
-              </time>
+      {/* Article - 内容宽度限制在 680px */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-[680px] mx-auto">
+          {/* 返回链接 */}
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-gray-500 hover:text-[var(--accent-primary)] text-sm tracking-wide mb-8 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            返回首页
+          </Link>
+
+          {/* 文章内容 */}
+          <article className="card-technical p-8 mb-8">
+            {/* 文章头部 */}
+            <header className="mb-8">
+              <div className="flex items-center gap-4 text-xs text-gray-500 mb-5 uppercase tracking-wider">
+                {post.category_name && (
+                  <span className="bg-[var(--accent-secondary)] text-[var(--accent-primary)] px-3 py-1.5 font-medium border border-blue-200">
+                    {post.category_name}
+                  </span>
+                )}
+                <time dateTime={post.created_at} className="font-medium">
+                  {format(new Date(post.created_at), 'yyyy.MM.dd', { locale: zhCN })}
+                </time>
+              </div>
+              
+              <h1 className="text-3xl font-semibold text-gray-900 mb-6 tracking-wide leading-snug">
+                {post.title}
+              </h1>
+
+              {/* 作者信息 */}
+              <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                <div className="w-10 h-10 bg-gray-100 border-2 border-[var(--accent-secondary)] flex items-center justify-center text-[var(--accent-primary)] font-bold tracking-wider rounded-full">
+                  B
+                </div>
+                <div>
+                  <p className="text-gray-900 text-sm font-medium tracking-wide">博主</p>
+                  <p className="text-gray-500 text-xs tracking-wide">原创作者</p>
+                </div>
+              </div>
+            </header>
+
+            {/* 文章正文 - @tailwindcss/typography 插件样式 */}
+            <div 
+              className="prose prose-lg max-w-none"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+          </article>
+
+          {/* 评论区 */}
+          <div className="card-technical p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6 tracking-wide flex items-center gap-2">
+              <svg className="w-5 h-5 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              评论 ({comments.length})
+            </h2>
+            
+            <CommentForm postId={post.id} />
+            
+            <div className="mt-8">
+              <CommentList comments={comments} />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">{post.title}</h1>
-          </header>
-
-          <div 
-            className="prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
-        </article>
-
-        {/* Comments Section */}
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            评论 ({comments.length})
-          </h2>
-          
-          <CommentForm postId={post.id} />
-          
-          <div className="mt-8">
-            <CommentList comments={comments} />
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Top Navigation */}
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
@@ -26,22 +26,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 博客管理后台
               </Link>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <Link
                 href="/"
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-gray-900 text-sm"
               >
                 返回首页
               </Link>
               <Link
                 href="/profile"
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-gray-900 text-sm"
               >
                 个人中心
               </Link>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-red-600 hover:text-red-700 text-sm"
               >
                 退出登录
               </button>
@@ -52,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-sm min-h-[calc(100vh-4rem)]">
+        <aside className="w-64 bg-white shadow-sm border-r border-gray-200 min-h-[calc(100vh-4rem)]">
           <nav className="p-4 space-y-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');

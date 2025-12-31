@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { PostRepository } from '@/lib/repositories/post-repository';
@@ -10,16 +10,35 @@ const postRepository = new PostRepository();
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
   const published = searchParams.get('published');
+  const categoryId = searchParams.get('categoryId');
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const offset = parseInt(searchParams.get('offset') || '0', 10);
 
   let rows: any[];
+  let total: number = 0;
   
-  if (published === 'true') {
-    rows = await postRepository.getPublishedPosts();
+  // 处理分页请求
+  if (categoryId) {
+    // 获取指定分类的文章
+    const catId = parseInt(categoryId, 10);
+    rows = await postRepository.getPostsByCategory(catId, limit, offset);
+    total = await postRepository.countPostsByCategory(catId);
+  } else if (published === 'false') {
+    // 获取所有文章（管理后台用，分页）
+    rows = await postRepository.getAllPosts(limit, offset);
+    total = await postRepository.countAllPosts();
   } else {
-    rows = await postRepository.getAllPosts();
+    // 默认获取已发布的文章（前台展示用，分页）
+    rows = await postRepository.getPublishedPosts(limit, offset);
+    total = await postRepository.countPublishedPosts();
   }
 
-  return ApiResponse.success(rows, '获取文章列表成功');
+  // 返回包含 total 的响应
+  return NextResponse.json({
+    success: true,
+    data: rows,
+    total
+  }, { status: 200 });
 });
 
 // POST /api/posts - 创建文章
@@ -47,7 +66,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   if (slugExists) {
     return ApiResponse.conflict('URL别名已存在，请使用其他别名');
   }
-
 
   const postId = await postRepository.create({
     title,

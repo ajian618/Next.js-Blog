@@ -6,7 +6,7 @@ import { Providers } from './providers';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'My Blog - 个人博客系统',
+  title: '天刀绝剑楼 - 个人博客系统',
   description: '基于 Next.js 和 MySQL 的博客系统',
 };
 

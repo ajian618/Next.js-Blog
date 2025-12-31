@@ -15,9 +15,13 @@ interface Post {
   created_at: string;
 }
 
-const POSTS_PER_PAGE = 3;
+interface CategoryPostListProps {
+  categoryId: number;
+}
 
-export function PostList() {
+const POSTS_PER_PAGE = 10;
+
+export function CategoryPostList({ categoryId }: CategoryPostListProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -35,7 +39,7 @@ export function PostList() {
     async function fetchPosts() {
       try {
         const offset = (currentPage - 1) * POSTS_PER_PAGE;
-        const response = await fetch(`/api/posts?limit=${POSTS_PER_PAGE}&offset=${offset}`, {
+        const response = await fetch(`/api/posts?categoryId=${categoryId}&limit=${POSTS_PER_PAGE}&offset=${offset}`, {
           signal: abortController.signal
         });
         
@@ -72,7 +76,7 @@ export function PostList() {
       clearTimeout(timeoutId);
       abortController.abort();
     };
-  }, [currentPage]);
+  }, [categoryId, currentPage]);
 
   // 当页码变化时，滚动到页面顶部
   useEffect(() => {
@@ -119,7 +123,7 @@ export function PostList() {
           <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
           </svg>
-          <p className="text-gray-600 text-lg tracking-wide">暂无文章</p>
+          <p className="text-gray-600 text-lg tracking-wide">该分类暂无文章</p>
           <p className="text-gray-500 text-sm mt-2 tracking-wide">敬请期待精彩内容</p>
         </div>
       </div>

@@ -109,7 +109,7 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="文章标题"
           />
         </div>
@@ -124,7 +124,7 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               required
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               placeholder="url-slug"
             />
             <button
@@ -145,7 +145,7 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
             value={excerpt}
             onChange={(e) => setExcerpt(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="文章摘要（选填，留空将自动生成）"
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -160,7 +160,7 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           >
             <option value="">无分类</option>
             {categories.map((category) => (
