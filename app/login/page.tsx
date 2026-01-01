@@ -4,6 +4,7 @@ import { useState, useTransition, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import VideoBackground from '@/components/VideoBackground';
 
 function LoginForm() {
   const router = useRouter();
@@ -39,18 +40,19 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <VideoBackground />
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h1 className="text-center text-2xl font-bold text-gray-900 mb-2 tracking-wide" style={{ letterSpacing: '0.05em' }}>
+        <h1 className="text-center text-2xl font-bold text-white mb-2 tracking-wide" style={{ letterSpacing: '0.05em' }}>
           欢迎回来
         </h1>
-        <p className="text-center text-gray-600">
+        <p className="text-center text-white/80">
           登录到您的账户
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white border border-gray-200 py-10 px-8 shadow-sm rounded-lg">
+        <div className="bg-white/60 backdrop-blur-md rounded-lg border border-white/40 shadow-sm py-10 px-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 p-3 text-sm animate-fade-in tracking-wide rounded">
@@ -146,7 +148,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center text-gray-500">加载中...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">加载中...</div>}>
       <LoginForm />
     </Suspense>
   );

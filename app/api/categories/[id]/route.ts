@@ -6,6 +6,23 @@ import { ApiResponse, withErrorHandling } from '@/lib/api-response';
 
 const categoryRepository = new CategoryRepository();
 
+// GET /api/categories/[id] - 获取单个分类
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return withErrorHandling(async () => {
+    const id = parseInt(params.id);
+    const category = await categoryRepository.findById(id);
+    
+    if (!category) {
+      return ApiResponse.notFound('分类不存在');
+    }
+
+    return ApiResponse.success(category, '获取分类成功');
+  })(request);
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }

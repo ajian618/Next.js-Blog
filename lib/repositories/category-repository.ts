@@ -33,6 +33,24 @@ export class CategoryRepository extends Repository<Category> {
     ]);
   }
 
+  // 根据ID查找分类
+  async findById(id: number): Promise<Category | null> {
+    const [rows] = await this.pool.query<CategoryRow[]>(
+      `${this.selectQuery} WHERE id = ?`,
+      [id]
+    );
+    const row = rows[0];
+    if (!row) return null;
+    
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      created_at: row.created_at.toISOString()
+    };
+  }
+
   // 根据slug查找分类
   async findBySlug(slug: string): Promise<Category | null> {
     const [rows] = await this.pool.query<CategoryRow[]>(

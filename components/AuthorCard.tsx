@@ -38,7 +38,7 @@ export default function AuthorCard() {
   const initial = author.name.charAt(0).toUpperCase();
 
   return (
-    <aside className="card-technical p-6 mb-6">
+    <aside className="bg-white/60 backdrop-blur-md rounded-lg border border-white/40 shadow-sm p-6 mb-6">
       <div className="text-center mb-5">
         {avatarUrl ? (
           <img 

@@ -89,7 +89,7 @@ export function CategoryPostList({ categoryId }: CategoryPostListProps) {
     return (
       <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="card-technical p-6 animate-pulse">
+          <div key={i} className="bg-white/60 backdrop-blur-md rounded-lg border border-white/40 shadow-sm p-6 animate-pulse">
             <div className="h-4 bg-gray-100 w-24 rounded mb-4"></div>
             <div className="h-6 bg-gray-100 w-3/4 rounded mb-3"></div>
             <div className="h-4 bg-gray-100 w-full rounded mb-2"></div>
@@ -103,7 +103,7 @@ export function CategoryPostList({ categoryId }: CategoryPostListProps) {
   if (error) {
     return (
       <div className="text-center py-12">
-        <div className="card-technical p-6 max-w-md mx-auto">
+        <div className="bg-white/60 backdrop-blur-md rounded-lg border border-white/40 shadow-sm p-6 max-w-md mx-auto">
           <p className="text-red-600 mb-4 tracking-wide">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -119,7 +119,7 @@ export function CategoryPostList({ categoryId }: CategoryPostListProps) {
   if (posts.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="card-technical p-12">
+        <div className="bg-white/60 backdrop-blur-md rounded-lg border border-white/40 shadow-sm p-12">
           <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
           </svg>
@@ -136,7 +136,7 @@ export function CategoryPostList({ categoryId }: CategoryPostListProps) {
         {posts.map((post) => (
           <article
             key={post.id}
-            className="card-technical p-6 hover:border-[var(--accent-primary)] transition-all duration-200 group"
+            className="bg-white/60 backdrop-blur-md rounded-lg border border-white/40 shadow-sm p-6 hover:border-[var(--accent-primary)] transition-all duration-200 group"
           >
             {/* 分类标签和日期 */}
             <div className="flex items-center gap-4 text-xs text-gray-500 mb-5 uppercase tracking-wider">
@@ -189,7 +189,7 @@ export function CategoryPostList({ categoryId }: CategoryPostListProps) {
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 text-sm border border-gray-200 hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded"
+            className="px-4 py-2 text-sm border border-gray-200 hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded bg-white/60 backdrop-blur-md"
           >
             上一页
           </button>
@@ -199,10 +199,10 @@ export function CategoryPostList({ categoryId }: CategoryPostListProps) {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`px-4 py-2 text-sm border transition-colors rounded ${
+                className={`px-4 py-2 text-sm border transition-colors rounded backdrop-blur-md ${
                   currentPage === page
-                    ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] bg-blue-50'
-                    : 'border-gray-200 hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]'
+                    ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] bg-blue-50/80'
+                    : 'border-gray-200 hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] bg-white/60'
                 }`}
               >
                 {page}
@@ -213,7 +213,7 @@ export function CategoryPostList({ categoryId }: CategoryPostListProps) {
           <button
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 text-sm border border-gray-200 hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded"
+            className="px-4 py-2 text-sm border border-gray-200 hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded bg-white/60 backdrop-blur-md"
           >
             下一页
           </button>
