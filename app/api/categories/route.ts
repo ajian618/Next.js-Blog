@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, slug, description } = body;
+    const { name, slug, description, cover_image } = body;
 
     if (!name || !slug) {
       return ApiResponse.validationError({ name: '名称必填', slug: '别名必填' });
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       return ApiResponse.conflict('分类别名已存在');
     }
 
-    const id = await categoryRepository.create({ name, slug, description });
+    const id = await categoryRepository.create({ name, slug, description, cover_image });
     return ApiResponse.created({ id }, '分类创建成功');
   })(request);
 }

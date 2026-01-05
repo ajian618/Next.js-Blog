@@ -11,14 +11,20 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
   const published = searchParams.get('published');
   const categoryId = searchParams.get('categoryId');
+  const search = searchParams.get('search');
   const limit = parseInt(searchParams.get('limit') || '10', 10);
   const offset = parseInt(searchParams.get('offset') || '0', 10);
 
   let rows: any[];
   let total: number = 0;
   
-  // 处理分页请求
-  if (categoryId) {
+  // 处理搜索请求
+  if (search && search.trim()) {
+    rows = await postRepository.searchPosts(search.trim(), limit, offset);
+    total = await postRepository.countSearchResults(search.trim());
+  }
+  // 处理分类请求
+  else if (categoryId) {
     // 获取指定分类的文章
     const catId = parseInt(categoryId, 10);
     rows = await postRepository.getPostsByCategory(catId, limit, offset);

@@ -7,6 +7,7 @@ interface CategoryRow extends RowDataPacket {
   name: string;
   slug: string;
   description?: string;
+  cover_image?: string;
   created_at: Date;
 }
 
@@ -14,12 +15,14 @@ interface CreateCategoryData {
   name: string;
   slug: string;
   description?: string;
+  cover_image?: string;
 }
 
 interface UpdateCategoryData {
   name?: string;
   slug?: string;
   description?: string;
+  cover_image?: string;
 }
 
 export class CategoryRepository extends Repository<Category> {
@@ -29,6 +32,7 @@ export class CategoryRepository extends Repository<Category> {
       'name',
       'slug',
       'description',
+      'cover_image',
       'created_at'
     ]);
   }
@@ -47,6 +51,7 @@ export class CategoryRepository extends Repository<Category> {
       name: row.name,
       slug: row.slug,
       description: row.description,
+      cover_image: row.cover_image,
       created_at: row.created_at.toISOString()
     };
   }
@@ -65,6 +70,7 @@ export class CategoryRepository extends Repository<Category> {
       name: row.name,
       slug: row.slug,
       description: row.description,
+      cover_image: row.cover_image,
       created_at: row.created_at.toISOString()
     };
   }
@@ -99,8 +105,8 @@ export class CategoryRepository extends Repository<Category> {
 
   async create(data: CreateCategoryData): Promise<number> {
     const [result] = await this.pool.query<ResultSetHeader>(
-      `INSERT INTO categories (name, slug, description) VALUES (?, ?, ?)`,
-      [data.name, data.slug, data.description || '']
+      `INSERT INTO categories (name, slug, description, cover_image) VALUES (?, ?, ?, ?)`,
+      [data.name, data.slug, data.description || '', data.cover_image || null]
     );
     return result.insertId;
   }
@@ -120,6 +126,10 @@ export class CategoryRepository extends Repository<Category> {
     if (data.description !== undefined) {
       updates.push('description = ?');
       values.push(data.description);
+    }
+    if (data.cover_image !== undefined) {
+      updates.push('cover_image = ?');
+      values.push(data.cover_image);
     }
 
     if (updates.length === 0) {
@@ -143,6 +153,7 @@ export class CategoryRepository extends Repository<Category> {
       name: row.name,
       slug: row.slug,
       description: row.description,
+      cover_image: row.cover_image,
       created_at: row.created_at.toISOString()
     }));
   }

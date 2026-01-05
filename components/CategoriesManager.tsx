@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Category } from '@/types';
 
 interface CategoriesManagerProps {
@@ -12,20 +13,17 @@ export default function CategoriesManager({ initialCategories }: CategoriesManag
   const router = useRouter();
   const [categories, setCategories] = useState(initialCategories);
   const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState({ name: '', slug: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', slug: '', description: '', cover_image: '' });
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const url = editingId ? `/api/categories/${editingId}` : '/api/categories';
-      const method = editingId ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('/api/categories', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
@@ -40,9 +38,8 @@ export default function CategoriesManager({ initialCategories }: CategoriesManag
         throw new Error((result as any).error || '操作失败');
       }
 
-      setFormData({ name: '', slug: '', description: '' });
+      setFormData({ name: '', slug: '', description: '', cover_image: '' });
       setIsAdding(false);
-      setEditingId(null);
       router.refresh();
       
       // 重新获取分类列表
@@ -56,16 +53,6 @@ export default function CategoriesManager({ initialCategories }: CategoriesManag
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleEdit = (category: Category) => {
-    setEditingId(category.id);
-    setFormData({
-      name: category.name,
-      slug: category.slug,
-      description: category.description || '',
-    });
-    setIsAdding(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -95,6 +82,49 @@ export default function CategoriesManager({ initialCategories }: CategoriesManag
     setFormData({ ...formData, slug });
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('请上传图片文件');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('图片大小不能超过5MB');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('type', 'category');
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        throw new Error('上传失败');
+      }
+
+      const result = await response.json();
+      if (result.success && result.url) {
+        setFormData({ ...formData, cover_image: result.url });
+      } else {
+        throw new Error('上传失败');
+      }
+    } catch (error) {
+      alert('图片上传失败，请重试');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
@@ -103,8 +133,7 @@ export default function CategoriesManager({ initialCategories }: CategoriesManag
           <button
             onClick={() => {
               setIsAdding(true);
-              setEditingId(null);
-              setFormData({ name: '', slug: '', description: '' });
+              setFormData({ name: '', slug: '', description: '', cover_image: '' });
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
@@ -159,20 +188,43 @@ export default function CategoriesManager({ initialCategories }: CategoriesManag
                   className="w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  封面图片
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
+                  />
+                  {formData.cover_image && (
+                    <img
+                      src={formData.cover_image}
+                      alt="封面预览"
+                      className="w-32 h-32 object-cover rounded-md"
+                    />
+                  )}
+                  {uploading && (
+                    <p className="text-sm text-gray-500">上传中...</p>
+                  )}
+                </div>
+              </div>
               <div className="flex gap-2">
                 <button
                   type="submit"
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {loading ? '保存中...' : editingId ? '更新' : '创建'}
+                  {loading ? '创建中...' : '创建'}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setIsAdding(false);
-                    setEditingId(null);
-                    setFormData({ name: '', slug: '', description: '' });
+                    setFormData({ name: '', slug: '', description: '', cover_image: '' });
                   }}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
                 >
@@ -189,20 +241,29 @@ export default function CategoriesManager({ initialCategories }: CategoriesManag
               key={category.id}
               className="flex justify-between items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
             >
-              <div>
-                <h3 className="font-medium text-gray-900">{category.name}</h3>
-                <p className="text-sm text-gray-500">{category.slug}</p>
-                {category.description && (
-                  <p className="text-sm text-gray-600 mt-1">{category.description}</p>
+              <div className="flex items-center gap-4">
+                {category.cover_image && (
+                  <img
+                    src={category.cover_image}
+                    alt={category.name}
+                    className="w-16 h-16 object-cover rounded-md"
+                  />
                 )}
+                <div>
+                  <h3 className="font-medium text-gray-900">{category.name}</h3>
+                  <p className="text-sm text-gray-500">{category.slug}</p>
+                  {category.description && (
+                    <p className="text-sm text-gray-600 mt-1">{category.description}</p>
+                  )}
+                </div>
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(category)}
+                <Link
+                  href={`/admin/categories/${category.id}/edit`}
                   className="text-blue-600 hover:text-blue-800"
                 >
                   编辑
-                </button>
+                </Link>
                 <button
                   onClick={() => handleDelete(category.id)}
                   className="text-red-600 hover:text-red-800"

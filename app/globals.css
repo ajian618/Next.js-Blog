@@ -197,9 +197,11 @@ img {
   margin-bottom: 0.25rem;
   color: var(--text-primary);
   overflow: hidden;
+  text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
 }
 
 .card-meta {

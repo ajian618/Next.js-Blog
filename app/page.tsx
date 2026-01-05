@@ -18,7 +18,7 @@ export default function Home() {
         <FeatureTabs />
 
         {/* 最新文章 */}
-        <PostGrid title="Newest" limit={9} showAll={true} />
+        <PostGrid title="Newest" limit={3} showAll={true} />
       </div>
 
       <Footer />

@@ -32,31 +32,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '文件大小不能超过 5MB' }, { status: 400 });
     }
 
-    // 检查是否是头像上传
-    const isAvatar = formData.get('type') === 'avatar';
+    // 检查上传类型
+    const uploadType = formData.get('type') as string || 'image'; // 'avatar', 'category', 'image'
     
-    // 创建上传目录 - 头像单独存放
-    const uploadDir = isAvatar 
-      ? path.join(process.cwd(), 'public', 'uploads', 'avatars')
-      : path.join(process.cwd(), 'public', 'uploads');
+    // 根据类型确定上传目录
+    let uploadDir: string;
+    let prefix: string;
+    
+    if (uploadType === 'avatar') {
+      uploadDir = path.join(process.cwd(), 'public', 'uploads', 'avatars');
+      prefix = 'avatar-';
+    } else if (uploadType === 'category') {
+      uploadDir = path.join(process.cwd(), 'public', 'uploads', 'category');
+      prefix = 'category-';
+    } else {
+      uploadDir = path.join(process.cwd(), 'public', 'uploads');
+      prefix = 'image-';
+    }
+    
+    // 创建上传目录
     await mkdir(uploadDir, { recursive: true });
 
     // 生成唯一文件名
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 8);
     const extension = path.extname(file.name);
-    const filename = isAvatar 
-      ? `avatar-${timestamp}-${random}${extension}`
-      : `image-${timestamp}-${random}${extension}`;
+    const filename = `${prefix}${timestamp}-${random}${extension}`;
     const filepath = path.join(uploadDir, filename);
 
     // 保存文件
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(filepath, buffer);
 
-    // 返回文件 URL - 使用正确的路径
-    const fileUrl = isAvatar 
+    // 返回文件 URL
+    const fileUrl = uploadType === 'avatar'
       ? `/uploads/avatars/${filename}`
+      : uploadType === 'category'
+      ? `/uploads/category/${filename}`
       : `/uploads/${filename}`;
     
     return NextResponse.json({ 

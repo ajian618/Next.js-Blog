@@ -34,7 +34,7 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { name, slug, description } = body;
+    const { name, slug, description, cover_image } = body;
 
     if (!name || !slug) {
       return ApiResponse.validationError({ name: '名称必填', slug: '别名必填' });
@@ -56,7 +56,7 @@ export async function PUT(
       return ApiResponse.conflict('分类别名已存在');
     }
 
-    const success = await categoryRepository.update(id, { name, slug, description });
+    const success = await categoryRepository.update(id, { name, slug, description, cover_image });
     if (!success) {
       return ApiResponse.notFound('分类不存在');
     }

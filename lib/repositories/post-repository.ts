@@ -205,4 +205,37 @@ export class PostRepository extends Repository<Post> {
     const [rows] = await this.pool.query(query, [categoryId]);
     return (rows as any[])[0].total;
   }
+
+  // 搜索文章（模糊查询）
+  async searchPosts(
+    query: string,
+    limit: number = 10,
+    offset: number = 0
+  ): Promise<Post[]> {
+    const searchPattern = `%${query}%`;
+    const sql = `
+      SELECT p.id, p.title, p.slug, p.excerpt, p.category_id, p.cover_image, p.created_at, c.name as category_name
+      FROM posts p 
+      LEFT JOIN categories c ON p.category_id = c.id 
+      WHERE p.published = TRUE
+        AND (p.title LIKE ? OR p.content LIKE ? OR p.excerpt LIKE ?)
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+    const [rows] = await this.pool.query(sql, [searchPattern, searchPattern, searchPattern, limit, offset]);
+    return rows as Post[];
+  }
+
+  // 统计搜索结果数量
+  async countSearchResults(query: string): Promise<number> {
+    const searchPattern = `%${query}%`;
+    const sql = `
+      SELECT COUNT(*) as total 
+      FROM posts 
+      WHERE published = TRUE
+        AND (title LIKE ? OR content LIKE ? OR excerpt LIKE ?)
+    `;
+    const [rows] = await this.pool.query(sql, [searchPattern, searchPattern, searchPattern]);
+    return (rows as any[])[0].total;
+  }
 }

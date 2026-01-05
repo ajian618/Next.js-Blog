@@ -17,6 +17,7 @@ export interface Category {
   name: string;
   slug: string;
   description?: string;
+  cover_image?: string;
   created_at: string;
 }
 
