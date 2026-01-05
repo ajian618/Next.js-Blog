@@ -33,9 +33,7 @@ yarn-error.log*
 .env
 .env.production
 
-# 用户上传的文件
-public/uploads/*
-!public/uploads/.gitkeep
+
 
 # backup files
 *.sql.backup

@@ -38,7 +38,7 @@ export const PUT = withErrorHandling(async (request: NextRequest, { params }: { 
   }
 
   const body = await request.json();
-  const { title, slug, content, excerpt, category_id, published } = body;
+  const { title, slug, content, excerpt, category_id, published, cover_image } = body;
 
   // 参数验证
   if (!title || !slug || !content) {
@@ -67,7 +67,8 @@ export const PUT = withErrorHandling(async (request: NextRequest, { params }: { 
     content,
     excerpt,
     category_id,
-    published
+    published,
+    cover_image
   });
 
   if (!success) {

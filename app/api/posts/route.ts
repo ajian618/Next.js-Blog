@@ -50,7 +50,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   }
 
   const body = await request.json();
-  const { title, slug, content, excerpt, category_id, published } = body;
+  const { title, slug, content, excerpt, category_id, published, cover_image } = body;
 
   // 参数验证
   if (!title || !slug || !content) {
@@ -73,7 +73,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     content,
     excerpt,
     category_id,
-    published
+    published,
+    cover_image
   });
 
   return ApiResponse.created({ id: postId, slug }, '文章创建成功');

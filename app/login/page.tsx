@@ -4,7 +4,6 @@ import { useState, useTransition, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import VideoBackground from '@/components/VideoBackground';
 
 function LoginForm() {
   const router = useRouter();
@@ -40,9 +39,16 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <VideoBackground />
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat bg-fixed relative">
+      {/* 背景图片 */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/assets/images/banners/home-banner.jpg)' }}
+      />
+      <div className="absolute inset-0 bg-black/40" />
+      
+      {/* 内容 */}
+      <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-md">
         <h1 className="text-center text-2xl font-bold text-white mb-2 tracking-wide" style={{ letterSpacing: '0.05em' }}>
           欢迎回来
         </h1>
@@ -113,25 +119,7 @@ function LoginForm() {
           </form>
 
           <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-white text-gray-500">或</span>
-              </div>
-            </div>
-
             <div className="mt-6 text-center">
-              <Link
-                href="/register"
-                className="font-medium text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors tracking-wide"
-              >
-                还没有账户？立即注册
-              </Link>
-            </div>
-
-            <div className="mt-4 text-center">
               <Link
                 href="/"
                 className="text-sm text-gray-500 hover:text-gray-700 transition-colors tracking-wide"

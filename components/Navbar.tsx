@@ -11,7 +11,63 @@ interface UserData {
   name: string;
 }
 
-// 简化的用户菜单组件
+// 搜索组件
+function SearchBox() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 text-gray-600 hover:text-[var(--accent-primary)] transition-colors"
+        title="搜索"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-4 animate-slide-in z-50">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="搜索文章..."
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/20"
+            />
+            <Link
+              href={`/posts?search=${encodeURIComponent(query)}`}
+              onClick={() => setIsOpen(false)}
+              className="px-4 py-2 bg-[var(--accent-primary)] text-white rounded-md hover:bg-[var(--accent-hover)] transition-colors"
+            >
+              搜索
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 用户菜单组件
 function UserMenu({ session, userData, onSignOut }: { session: any; userData: UserData; onSignOut: () => void }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -35,35 +91,31 @@ function UserMenu({ session, userData, onSignOut }: { session: any; userData: Us
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-3 text-gray-600 hover:text-gray-900 transition-colors group"
+        className="p-2 text-gray-600 hover:text-[var(--accent-primary)] transition-colors"
+        title={userData.name || session.user.name}
       >
         {avatarUrl ? (
           <img 
             src={avatarUrl} 
             alt={session.user.name}
-            className="w-8 h-8 rounded object-cover border border-gray-300 group-hover:border-[var(--accent-primary)] transition-colors"
+            className="w-6 h-6 rounded object-cover border border-gray-300"
           />
         ) : (
-          <div className="w-8 h-8 bg-[var(--bg-tertiary)] border border-gray-300 flex items-center justify-center text-[var(--accent-primary)] text-sm font-bold tracking-wider group-hover:border-[var(--accent-primary)] transition-colors">
-            {session.user.name.charAt(0).toUpperCase()}
-          </div>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
         )}
-        <span className="hidden md:inline font-medium tracking-wide text-sm">{userData.name || session.user.name}</span>
-        <svg
-          className={`w-3.5 h-3.5 transition-transform text-gray-500 ${showDropdown ? 'rotate-180 text-[var(--accent-primary)]' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 py-1 animate-slide-in shadow-lg rounded-lg">
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 py-1 animate-slide-in shadow-lg rounded-lg z-50">
+          <div className="px-4 py-3 border-b border-gray-200">
+            <p className="text-sm font-medium text-gray-900">{userData.name || session.user.name}</p>
+            <p className="text-xs text-gray-500 mt-1">{session.user.email}</p>
+          </div>
           <Link
             href="/profile"
-            className="block px-4 py-2.5 text-sm text-gray-700 hover:text-[var(--accent-primary)] hover:bg-gray-50 transition-colors border-l-2 border-transparent hover:border-[var(--accent-primary)]"
+            className="block px-4 py-2 text-sm text-gray-700 hover:text-[var(--accent-primary)] hover:bg-gray-50 transition-colors"
             onClick={() => setShowDropdown(false)}
           >
             个人中心
@@ -72,7 +124,7 @@ function UserMenu({ session, userData, onSignOut }: { session: any; userData: Us
           {session.user.role === 'admin' && (
             <Link
               href="/admin/dashboard"
-              className="block px-4 py-2.5 text-sm text-[var(--accent-primary)] hover:bg-blue-50 transition-colors border-l-2 border-transparent hover:border-[var(--accent-primary)]"
+              className="block px-4 py-2 text-sm text-[var(--accent-primary)] hover:bg-blue-50 transition-colors"
               onClick={() => setShowDropdown(false)}
             >
               管理后台
@@ -85,7 +137,7 @@ function UserMenu({ session, userData, onSignOut }: { session: any; userData: Us
               setShowDropdown(false);
               onSignOut();
             }}
-            className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors border-l-2 border-transparent hover:border-red-600"
+            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
           >
             退出登录
           </button>
@@ -95,12 +147,67 @@ function UserMenu({ session, userData, onSignOut }: { session: any; userData: Us
   );
 }
 
+// 导航菜单项组件
+function NavItem({ label, children, active, onToggle }: { label: string; children: React.ReactNode; active: boolean; onToggle: () => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => {
+          setIsOpen(!isOpen);
+          onToggle();
+        }}
+        className={`text-sm font-medium transition-colors tracking-wide ${
+          active || isOpen 
+            ? 'text-[var(--accent-primary)]' 
+            : 'text-gray-600 hover:text-gray-900'
+        }`}
+      >
+        {label}
+      </button>
+      
+      {isOpen && (
+        <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 py-2 shadow-lg rounded-lg animate-slide-in z-50">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Navbar() {
   const { data: session, status } = useSession();
   const [userData, setUserData] = useState<UserData>({ name: '' });
+  const [activeMenu, setActiveMenu] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
   
-  // 优化：使用更短的加载超时
   const isLoading = status === 'loading';
+
+  // 滚动检测
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 100);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // 获取最新的用户信息
   useEffect(() => {
@@ -130,42 +237,131 @@ export default function Navbar() {
   }, [session?.user?.id]);
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      isScrolled 
+        ? 'bg-white/95 backdrop-blur-lg shadow-sm' 
+        : 'bg-gradient-to-b from-white via-white/70 via-white/50 via-white/30 via-white/20 to-transparent'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold text-gray-900 tracking-wider hover:text-[var(--accent-primary)] transition-colors uppercase" style={{ letterSpacing: '0.1em' }}>
-            天刀绝剑楼
-          </Link>
-          
-          <nav className="flex items-center gap-8">
+        <div className={`flex justify-between items-center transition-all duration-500 ${
+          isScrolled ? 'justify-center' : ''
+        }`}>
+          {/* 左侧：LOGO + 导航菜单 */}
+          <div className={`flex items-center gap-8 transition-all duration-500 ${
+            isScrolled ? 'flex-1 justify-center' : ''
+          }`}>
+            <Link 
+              href="/" 
+              className={`font-bold tracking-wider hover:text-[var(--accent-primary)] transition-all duration-500 uppercase ${
+              isScrolled ? 'text-xl' : 'text-2xl'
+            } text-gray-900`} style={{ letterSpacing: '0.1em' }}>
+              天刀绝剑楼
+            </Link>
             
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gray-100 border border-gray-200 animate-pulse rounded"></div>
-              </div>
-            ) : session?.user ? (
-              <UserMenu 
-                session={session}
-                userData={userData}
-                onSignOut={() => signOut({ callbackUrl: '/' })}
-              />
-            ) : (
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/login"
-                  className="text-gray-600 hover:text-gray-900 transition-colors text-sm tracking-wide"
+            {!isLoading && !isScrolled && (
+              <nav className="hidden md:flex items-center gap-6">
+                <NavItem
+                  label="档案馆"
+                  active={activeMenu === 'archive'}
+                  onToggle={() => setActiveMenu(activeMenu === 'archive' ? '' : 'archive')}
                 >
-                  登录
-                </Link>
-                <Link
-                  href="/register"
-                  className="px-5 py-2 bg-[var(--accent-primary)] text-white hover:bg-[var(--accent-hover)] transition-colors text-sm font-medium tracking-wide border border-[var(--accent-primary)] hover:border-[var(--accent-hover)] rounded"
+                  <Link href="/posts" className="block px-4 py-2 text-sm text-gray-700 hover:text-[var(--accent-primary)] hover:bg-gray-50 transition-colors">
+                    文章列表
+                  </Link>
+                  <Link href="/categories" className="block px-4 py-2 text-sm text-gray-700 hover:text-[var(--accent-primary)] hover:bg-gray-50 transition-colors">
+                    文章分类
+                  </Link>
+                  {/* 占位 */}
+                  <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                    文章标签
+                  </div>
+                  {/* 占位 */}
+                  <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                    文章归档
+                  </div>
+                </NavItem>
+
+                <NavItem
+                  label="更多内容"
+                  active={activeMenu === 'more'}
+                  onToggle={() => setActiveMenu(activeMenu === 'more' ? '' : 'more')}
                 >
-                  注册
+                  {/* 占位 */}
+                  <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                    片刻瞬间
+                  </div>
+                  {/* 占位 */}
+                  <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                    臻藏家画展
+                  </div>
+                  <Link href="/about" className="block px-4 py-2 text-sm text-gray-700 hover:text-[var(--accent-primary)] hover:bg-gray-50 transition-colors">
+                    关于本站
+                  </Link>
+                  <a
+                    href="https://www.travellings.cn/go.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:text-[var(--accent-primary)] hover:bg-gray-50 transition-colors"
+                  >
+                    开往 ↗
+                  </a>
+                </NavItem>
+
+                <Link
+                  href="/friends"
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors tracking-wide">
+                  友人帐
                 </Link>
-              </div>
+              </nav>
             )}
-          </nav>
+          </div>
+          
+          {/* 右侧：搜索 + 用户图标 */}
+          <div className={`flex items-center gap-3 transition-all duration-500 ${
+            isScrolled ? 'hidden' : ''
+          }`}>
+            {!isLoading && (
+              <>
+                <SearchBox />
+                
+                {session?.user ? (
+                  <UserMenu 
+                    session={session}
+                    userData={userData}
+                    onSignOut={() => signOut({ callbackUrl: '/' })}
+                  />
+                ) : (
+                  <Link 
+                    href="/login"
+                    className={`p-2 transition-colors ${
+                      isScrolled 
+                        ? 'text-gray-600 hover:text-[var(--accent-primary)]' 
+                        : 'text-gray-600 hover:text-[var(--accent-primary)]'
+                    }`}
+                    title="登录"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </Link>
+                )}
+
+                {/* 移动端菜单按钮 */}
+                <button
+                  className={`md:hidden transition-colors ${
+                    isScrolled 
+                      ? 'text-gray-600 hover:text-gray-900' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setActiveMenu(activeMenu === 'mobile' ? '' : 'mobile')}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>

@@ -8,8 +8,6 @@ import CommentForm from '@/components/CommentForm';
 import CommentList from '@/components/CommentList';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import AuthorCard from '@/components/AuthorCard';
-import VideoBackground from '@/components/VideoBackground';
 
 const postRepository = new PostRepository();
 const commentRepository = new CommentRepository();
@@ -45,8 +43,15 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const comments = await getComments(post.id);
 
   return (
-    <div className="min-h-screen">
-      <VideoBackground />
+    <div className="min-h-screen relative bg-[var(--bg-secondary)]">
+      {/* 背景图片 - 使用背景图方式避免模糊 */}
+      <div 
+        className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/assets/images/banners/home-banner.jpg)' }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-white/90 to-gray-100/85" />
+      </div>
+      
       <Navbar />
 
       {/* Article - 使用两栏布局 */}
@@ -109,10 +114,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
             </div>
           </div>
 
-          {/* 右侧：博主介绍 */}
-          <aside>
-            <AuthorCard />
-          </aside>
+          {/* 右侧：博主介绍 - 暂时移除，组件不存在 */}
         </div>
       </main>
 

@@ -6,6 +6,7 @@ export interface Post {
   excerpt: string;
   category_id: number;
   category_name?: string;
+  cover_image?: string;
   created_at: string;
   updated_at: string;
   published: boolean;

@@ -26,7 +26,9 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
   const [content, setContent] = useState(post?.content || '');
   const [excerpt, setExcerpt] = useState(post?.excerpt || '');
   const [categoryId, setCategoryId] = useState(post?.category_id || '');
+  const [coverImage, setCoverImage] = useState(post?.cover_image || '');
   const [published, setPublished] = useState(post?.published || false);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,6 +43,46 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
       }
     }
   }, [content, excerpt]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+      alert('请上传图片文件');
+      return;
+    }
+
+    // 验证文件大小（5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      alert('图片大小不能超过5MB');
+      return;
+    }
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'post');
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (result.success && result.url) {
+        setCoverImage(result.url);
+      } else {
+        throw new Error(result.error || '上传失败');
+      }
+    } catch (err: any) {
+      alert(err.message || '上传失败');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +102,7 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
           content,
           excerpt,
           category_id: categoryId || null,
+          cover_image: coverImage || null,
           published,
         }),
       });
@@ -151,6 +194,70 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
           <p className="text-xs text-gray-500 mt-1">
             提示：留空并输入内容后，系统会自动生成摘要
           </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            封面图片
+          </label>
+          <div className="space-y-3">
+            {coverImage && (
+              <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gray-200">
+                <img
+                  src={coverImage}
+                  alt="封面"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCoverImage('')}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-md hover:bg-red-600"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            <div>
+              <input
+                type="file"
+                id="cover-upload"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+              <label
+                htmlFor="cover-upload"
+                className={`flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                  uploading
+                    ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                    : 'border-gray-300 hover:border-[var(--theme-color-pri)] hover:bg-[var(--theme-color-op5)]'
+                }`}
+              >
+                {uploading ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>上传中...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>上传封面</span>
+                  </>
+                )}
+              </label>
+              <p className="text-xs text-gray-500 mt-1">
+                支持 JPG、PNG 格式，建议尺寸 1280x720，最大 5MB
+              </p>
+            </div>
+          </div>
         </div>
 
         <div>

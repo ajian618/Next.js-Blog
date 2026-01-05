@@ -10,6 +10,7 @@ interface PostRow extends RowDataPacket {
   excerpt: string;
   category_id: number;
   category_name: string;
+  cover_image: string;
   published: boolean;
   created_at: Date;
   updated_at: Date;
@@ -22,6 +23,7 @@ interface CreatePostData {
   excerpt?: string;
   category_id?: number;
   published?: boolean;
+  cover_image?: string;
 }
 
 interface UpdatePostData {
@@ -31,6 +33,7 @@ interface UpdatePostData {
   excerpt?: string;
   category_id?: number;
   published?: boolean;
+  cover_image?: string;
 }
 
 export class PostRepository extends Repository<Post> {
@@ -42,6 +45,7 @@ export class PostRepository extends Repository<Post> {
       'content',
       'excerpt',
       'category_id',
+      'cover_image',
       'published',
       'created_at',
       'updated_at'
@@ -51,7 +55,7 @@ export class PostRepository extends Repository<Post> {
   // 获取所有已发布的文章（带分类名称）
   async getPublishedPosts(limit: number = 10, offset: number = 0): Promise<Post[]> {
     const query = `
-      SELECT p.id, p.title, p.slug, p.excerpt, p.category_id, p.created_at, c.name as category_name
+      SELECT p.id, p.title, p.slug, p.excerpt, p.category_id, p.cover_image, p.created_at, c.name as category_name
       FROM posts p 
       LEFT JOIN categories c ON p.category_id = c.id 
       WHERE p.published = TRUE 
@@ -115,8 +119,8 @@ export class PostRepository extends Repository<Post> {
 
   async create(data: CreatePostData): Promise<number> {
     const [result] = await this.pool.query<ResultSetHeader>(
-      `INSERT INTO posts (title, slug, content, excerpt, category_id, published) VALUES (?, ?, ?, ?, ?, ?)`,
-      [data.title, data.slug, data.content, data.excerpt || '', data.category_id || null, data.published || false]
+      `INSERT INTO posts (title, slug, content, excerpt, category_id, cover_image, published) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [data.title, data.slug, data.content, data.excerpt || '', data.category_id || null, data.cover_image || null, data.published || false]
     );
     return result.insertId;
   }
@@ -148,6 +152,10 @@ export class PostRepository extends Repository<Post> {
     if (data.published !== undefined) {
       updates.push('published = ?');
       values.push(data.published);
+    }
+    if (data.cover_image !== undefined) {
+      updates.push('cover_image = ?');
+      values.push(data.cover_image);
     }
 
     if (updates.length === 0) {

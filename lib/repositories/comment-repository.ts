@@ -71,12 +71,13 @@ export class CommentRepository extends Repository<Comment> {
   }
 
   // 获取所有评论（管理后台用，带文章标题和用户头像）
-  async getAllCommentsWithPostTitle(): Promise<(Comment & { post_title: string })[]> {
+  async getAllCommentsWithPostTitle(): Promise<(Comment & { post_title: string; post_slug: string })[]> {
     const query = `
       SELECT 
         c.id, c.post_id, c.user_id, c.author_email, 
         c.content, c.created_at, c.approved,
         p.title as post_title,
+        p.slug as post_slug,
         COALESCE(u.name, c.author_name) as author_name,
         u.avatar as author_avatar
       FROM comments c
@@ -85,7 +86,7 @@ export class CommentRepository extends Repository<Comment> {
       ORDER BY c.created_at DESC
     `;
     const [rows] = await this.pool.query(query);
-    return (rows as any[]).map(row => ({
+    return (rows as any[]).map(row =>({
       id: row.id,
       post_id: row.post_id,
       user_id: row.user_id,
@@ -95,7 +96,8 @@ export class CommentRepository extends Repository<Comment> {
       content: row.content,
       created_at: row.created_at.toISOString(),
       approved: row.approved,
-      post_title: row.post_title
+      post_title: row.post_title,
+      post_slug: row.post_slug
     }));
   }
 

@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import VideoBackground from '@/components/VideoBackground';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -68,9 +67,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <VideoBackground />
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat bg-fixed relative">
+      {/* 背景图片 */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/assets/images/banners/home-banner.jpg)' }}
+      />
+      <div className="absolute inset-0 bg-black/40" />
+      
+      {/* 内容 */}
+      <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-md">
         <h1 className="text-center text-2xl font-bold text-white mb-2 tracking-wide" style={{ letterSpacing: '0.05em' }}>
           创建账户
         </h1>

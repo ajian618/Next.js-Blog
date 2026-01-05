@@ -192,4 +192,22 @@ export class UserRepository extends Repository<User> {
     );
     return result.affectedRows > 0;
   }
+
+  // 获取管理员用户
+  async getAdminUser(): Promise<{
+    id: number;
+    email: string;
+    name: string;
+    avatar?: string;
+    bio?: string;
+  } | null> {
+    const query = `
+      SELECT id, email, name, avatar, bio 
+      FROM users 
+      WHERE role = 'admin' AND status = 'active'
+      LIMIT 1
+    `;
+    const [rows] = await this.pool.query(query);
+    return (rows as any[])[0] || null;
+  }
 }
