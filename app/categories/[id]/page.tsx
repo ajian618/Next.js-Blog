@@ -3,8 +3,6 @@ import Footer from '@/components/Footer';
 import { CategoryPostList } from '@/components/CategoryPostList';
 import { notFound } from 'next/navigation';
 import { CategoryRepository } from '@/lib/repositories/category-repository';
-import AuthorCard from '@/components/AuthorCard';
-import VideoBackground from '@/components/VideoBackground';
 
 const categoryRepository = new CategoryRepository();
 
@@ -27,7 +25,6 @@ export default async function CategoryPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen">
-      <VideoBackground />
       <Navbar />
 
       {/* Main Content */}
@@ -42,18 +39,8 @@ export default async function CategoryPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* 使用两栏布局：左侧文章列表，右侧博主介绍 */}
-        <div className="grid lg:grid-cols-[1fr_300px] gap-8">
-          {/* 左侧：文章列表 */}
-          <div className="min-w-0">
-            <CategoryPostList categoryId={categoryId} />
-          </div>
-
-          {/* 右侧：博主介绍 */}
-          <aside>
-            <AuthorCard />
-          </aside>
-        </div>
+        {/* 文章列表 */}
+        <CategoryPostList categoryId={categoryId} />
       </main>
 
       <Footer />
