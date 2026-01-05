@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -20,10 +20,24 @@ interface Post {
   cover_image?: string;
 }
 
-export default function SearchPage() {
+// 搜索参数组件
+function SearchParamsHandler({ children }: { children: (query: string) => React.ReactNode }) {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
-  
+  return <>{children(query)}</>;
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-blue-50 to-white"></div>}>
+      <SearchParamsHandler>
+        {(query) => <SearchContent query={query} />}
+      </SearchParamsHandler>
+    </Suspense>
+  );
+}
+
+function SearchContent({ query }: { query: string }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
