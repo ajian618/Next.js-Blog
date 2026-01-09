@@ -5,11 +5,22 @@ import { useRouter } from 'next/navigation';
 import { Post, Category } from '@/types';
 import dynamic from 'next/dynamic';
 
-// 动态导入 TiptapEditor，确保客户端渲染
-const TiptapEditor = dynamic(() => import('./TiptapEditor'), {
+// 导入编辑器样式
+import './editor/styles/editor.css';
+
+// 动态导入编辑器，确保客户端渲染
+const Editor = dynamic(() => import('./editor/Editor'), {
   loading: () => (
-    <div className="border border-gray-300 rounded-md p-4 bg-gray-50 animate-pulse">
-      <div className="h-64 bg-gray-200 rounded"></div>
+    <div className="border border-gray-300 rounded-lg bg-white">
+      <div className="flex flex-wrap gap-1 p-2 bg-gray-50 border-b border-gray-200">
+        <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-8 w-12 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+      <div className="p-6 min-h-[500px] bg-gray-50 animate-pulse">
+        <div className="h-4 bg-gray-200 rounded mb-3"></div>
+        <div className="h-4 bg-gray-200 rounded mb-3"></div>
+        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+      </div>
     </div>
   ),
 });
@@ -283,9 +294,9 @@ export default function PostEditor({ post, categories }: PostEditorProps) {
             内容 * (富文本编辑器)
           </label>
           
-          <TiptapEditor 
+          <Editor 
             content={content}
-            onChange={setContent}
+            onChange={(data) => setContent(data.html)}
           />
         </div>
 

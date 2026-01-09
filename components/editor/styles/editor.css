@@ -1,0 +1,329 @@
+/* 编辑器基础样式 */
+.ProseMirror {
+  outline: none;
+  min-height: 500px;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* 代码块样式 */
+.ProseMirror pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.ProseMirror pre code {
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+
+/* 代码高亮颜色 - One Dark 主题 */
+.ProseMirror .hljs-keyword,
+.ProseMirror .hljs-selector-tag,
+.ProseMirror .hljs-built_in {
+  color: #c678dd;
+}
+
+.ProseMirror .hljs-string,
+.ProseMirror .hljs-attr {
+  color: #98c379;
+}
+
+.ProseMirror .hljs-number {
+  color: #d19a66;
+}
+
+.ProseMirror .hljs-comment {
+  color: #5c6370;
+  font-style: italic;
+}
+
+.ProseMirror .hljs-function {
+  color: #61afef;
+}
+
+.ProseMirror .hljs-variable,
+.ProseMirror .hljs-template-variable {
+  color: #e06c75;
+}
+
+.ProseMirror .hljs-property {
+  color: #e06c75;
+}
+
+.ProseMirror .hljs-tag {
+  color: #e06c75;
+}
+
+.ProseMirror .hljs-name {
+  color: #e06c75;
+}
+
+.ProseMirror .hljs-attribute {
+  color: #d19a66;
+}
+
+.ProseMirror .hljs-params {
+  color: #abb2bf;
+}
+
+.ProseMirror .hljs-title {
+  color: #61afef;
+}
+
+.ProseMirror .hljs-type {
+  color: #d19a66;
+}
+
+.ProseMirror .hljs-literal {
+  color: #56b6c2;
+}
+
+.ProseMirror .hljs-symbol {
+  color: #56b6c2;
+}
+
+.ProseMirror .hljs-bullet {
+  color: #d19a66;
+}
+
+.ProseMirror .hljs-link {
+  color: #56b6c2;
+}
+
+/* 图片样式 */
+.ProseMirror img.editor-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 16px auto;
+  display: block;
+}
+
+.ProseMirror img.editor-image[data-align="left"] {
+  float: left;
+  margin-right: 16px;
+}
+
+.ProseMirror img.editor-image[data-align="right"] {
+  float: right;
+  margin-left: 16px;
+}
+
+/* 链接样式 */
+.ProseMirror a.editor-link {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a.editor-link:hover {
+  color: #1d4ed8;
+}
+
+/* 表格样式 */
+.ProseMirror table.editor-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+}
+
+.ProseMirror table.editor-table td,
+.ProseMirror table.editor-table th {
+  border: 1px solid #d1d5db;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.ProseMirror table.editor-table th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.ProseMirror table.editor-table tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+/* 引用块样式 */
+.ProseMirror blockquote {
+  border-left: 4px solid #2563eb;
+  padding-left: 16px;
+  margin: 16px 0;
+  color: #4b5563;
+  font-style: italic;
+}
+
+/* 高亮样式 */
+.ProseMirror mark {
+  background: #fef08a;
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* 分割线 */
+.ProseMirror hr {
+  border: none;
+  border-top: 2px solid #e5e7eb;
+  margin: 24px 0;
+}
+
+/* 列表样式 */
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 24px;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 24px;
+}
+
+.ProseMirror li {
+  margin: 4px 0;
+}
+
+.ProseMirror li p {
+  margin: 0;
+}
+
+/* 任务列表 */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ProseMirror ul[data-type="taskList"] li label {
+  flex-shrink: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div > p {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+/* YouTube 嵌入 */
+.ProseMirror .editor-youtube {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+
+.ProseMirror .editor-youtube iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* 代码块语言标签 */
+.code-block-wrapper {
+  position: relative;
+  margin: 16px 0;
+}
+
+.code-block-language {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* 选中状态 */
+.ProseMirror ::selection {
+  background: #bfdbfe;
+}
+
+/* 工具栏样式 */
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.editor-toolbar button {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #374151;
+  transition: all 0.15s;
+}
+
+.editor-toolbar button:hover {
+  background: #e5e7eb;
+}
+
+.editor-toolbar button.is-active {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.editor-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 下拉菜单 */
+.editor-dropdown {
+  position: relative;
+}
+
+.editor-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  min-width: 160px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+}
+
+.editor-dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.editor-dropdown-menu button:hover {
+  background: #f3f4f6;
+}
