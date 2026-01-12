@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getAvatarUrl } from '@/lib/image-utils';
 
 // 用户数据接口
@@ -27,7 +28,6 @@ function SearchBox() {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      // 自动聚焦输入框
       setTimeout(() => inputRef.current?.focus(), 100);
     }
 
@@ -111,7 +111,6 @@ function UserMenu({ session, userData, onSignOut }: { session: any; userData: Us
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 优先使用最新的用户数据头像，否则使用 session 头像
   const currentAvatar = userData.avatar || session.user.avatar;
   const avatarUrl = getAvatarUrl(currentAvatar, 32);
 
@@ -224,6 +223,7 @@ export default function Navbar() {
   const [userData, setUserData] = useState<UserData>({ name: '' });
   const [activeMenu, setActiveMenu] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isHoveringLogo, setIsHoveringLogo] = useState(false);
   
   const isLoading = status === 'loading';
 
@@ -231,13 +231,21 @@ export default function Navbar() {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 100);
+      if (window.scrollY <= 100) {
+        setIsHoveringLogo(false);
+      }
     };
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 获取最新的用户信息
+  // 平滑滚动回顶部
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 获取用户信息
   useEffect(() => {
     const fetchUserData = async () => {
       if (session?.user?.id) {
@@ -245,10 +253,7 @@ export default function Navbar() {
           const response = await fetch('/api/user/profile');
           const result = await response.json();
           if (result.success && result.data) {
-            setUserData({
-              avatar: result.data.avatar,
-              name: result.data.name
-            });
+            setUserData({ avatar: result.data.avatar, name: result.data.name });
           }
         } catch (err) {
           console.error('获取用户信息失败:', err);
@@ -257,10 +262,7 @@ export default function Navbar() {
     };
 
     fetchUserData();
-
-    // 每分钟刷新一次用户数据，确保头像更新能及时显示
     const interval = setInterval(fetchUserData, 60000);
-
     return () => clearInterval(interval);
   }, [session?.user?.id]);
 
@@ -271,21 +273,76 @@ export default function Navbar() {
         : 'bg-gradient-to-b from-white via-white/70 via-white/50 via-white/30 via-white/20 to-transparent'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className={`flex justify-between items-center transition-all duration-500 ${
-          isScrolled ? 'justify-center' : ''
-        }`}>
+        <div className="flex justify-between items-center">
           {/* 左侧：LOGO + 导航菜单 */}
           <div className={`flex items-center gap-8 transition-all duration-500 ${
-            isScrolled ? 'flex-1 justify-center' : ''
+            isScrolled ? 'flex-1 justify-center absolute left-1/2 -translate-x-1/2' : 'relative'
           }`}>
-            <Link 
-              href="/" 
-              className={`font-bold tracking-wider hover:text-[var(--accent-primary)] transition-all duration-500 uppercase ${
-              isScrolled ? 'text-xl' : 'text-2xl'
-            } text-gray-900`} style={{ letterSpacing: '0.1em' }}>
-              天刀绝剑楼
-            </Link>
-            
+            {/* 首页大图时：LOGO 在左上角 */}
+            {!isScrolled && (
+              <Link 
+                href="/" 
+                className="font-bold tracking-wider hover:text-[var(--accent-primary)] transition-all duration-500 uppercase text-2xl text-gray-900"
+                style={{ letterSpacing: '0.1em' }}
+              >
+                天刀绝剑楼
+              </Link>
+            )}
+
+            {/* 滚动后：居中显示的交替动画 */}
+            {isScrolled && (
+              <div 
+                className="relative h-8 w-48"
+                onMouseEnter={() => setIsHoveringLogo(true)}
+                onMouseLeave={() => setIsHoveringLogo(false)}
+              >
+                <AnimatePresence mode="wait">
+                  {/* LOGO */}
+                  <motion.div
+                    key="logo"
+                    className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                    onClick={scrollToTop}
+                    initial={{ y: 0, opacity: 1 }}
+                    animate={{ 
+                      y: isHoveringLogo ? -32 : 0, 
+                      opacity: isHoveringLogo ? 0 : 1 
+                    }}
+                    exit={{ y: -32, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span 
+                      className="font-bold tracking-wider hover:text-[var(--accent-primary)] transition-colors uppercase text-xl text-gray-900"
+                      style={{ letterSpacing: '0.1em' }}
+                    >
+                      天刀绝剑楼
+                    </span>
+                  </motion.div>
+
+                  {/* 回到顶部 */}
+                  <motion.div
+                    key="back-to-top"
+                    className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                    onClick={scrollToTop}
+                    initial={{ y: 32, opacity: 0 }}
+                    animate={{ 
+                      y: isHoveringLogo ? 0 : 32, 
+                      opacity: isHoveringLogo ? 1 : 0 
+                    }}
+                    exit={{ y: 32, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span 
+                      className="font-bold tracking-wider hover:text-[var(--accent-primary)] transition-colors uppercase text-xl text-gray-900"
+                      style={{ letterSpacing: '0.1em' }}
+                    >
+                      回到顶部
+                    </span>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* 首页大图时显示导航菜单 */}
             {!isLoading && !isScrolled && (
               <nav className="hidden md:flex items-center gap-6">
                 <NavItem
@@ -299,11 +356,9 @@ export default function Navbar() {
                   <Link href="/categories" className="block px-4 py-2 text-sm text-gray-700 hover:text-[var(--accent-primary)] hover:bg-gray-50 transition-colors">
                     文章分类
                   </Link>
-                  {/* 占位 */}
                   <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
                     文章标签
                   </div>
-                  {/* 占位 */}
                   <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
                     文章归档
                   </div>
@@ -314,11 +369,9 @@ export default function Navbar() {
                   active={activeMenu === 'more'}
                   onToggle={() => setActiveMenu(activeMenu === 'more' ? '' : 'more')}
                 >
-                  {/* 占位 */}
                   <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
                     片刻瞬间
                   </div>
-                  {/* 占位 */}
                   <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
                     臻藏家画展
                   </div>
@@ -328,7 +381,7 @@ export default function Navbar() {
                   <a
                     href="https://www.travellings.cn/go.html"
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="noopenerferrer"
                     className="block px-4 py-2 text-sm text-gray-700 hover:text-[var(--accent-primary)] hover:bg-gray-50 transition-colors"
                   >
                     开往 ↗
@@ -346,7 +399,7 @@ export default function Navbar() {
           
           {/* 右侧：搜索 + 用户图标 */}
           <div className={`flex items-center gap-3 transition-all duration-500 ${
-            isScrolled ? 'hidden' : ''
+            isScrolled ? 'ml-auto' : ''
           }`}>
             {!isLoading && (
               <>
@@ -361,11 +414,7 @@ export default function Navbar() {
                 ) : (
                   <Link 
                     href="/login"
-                    className={`p-2 transition-colors ${
-                      isScrolled 
-                        ? 'text-gray-600 hover:text-[var(--accent-primary)]' 
-                        : 'text-gray-600 hover:text-[var(--accent-primary)]'
-                    }`}
+                    className="p-2 text-gray-600 hover:text-[var(--accent-primary)] transition-colors"
                     title="登录"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -374,13 +423,8 @@ export default function Navbar() {
                   </Link>
                 )}
 
-                {/* 移动端菜单按钮 */}
                 <button
-                  className={`md:hidden transition-colors ${
-                    isScrolled 
-                      ? 'text-gray-600 hover:text-gray-900' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
                   onClick={() => setActiveMenu(activeMenu === 'mobile' ? '' : 'mobile')}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

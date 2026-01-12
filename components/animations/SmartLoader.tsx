@@ -35,8 +35,9 @@ export default function SmartLoader({
       const resources = window.performance.getEntriesByType('resource');
       const loaded = resources.filter((r: any) => r.duration > 0 || r.transferSize > 0);
       const total = Math.max(resources.length, 10);
-      const percent = Math.min(95, (loaded.length / total) * 100);
-      setProgress(percent);
+      // 真实反映进度，可能超过 95%，由 handleComplete 负责走到 100%
+      const percent = (loaded.length / total) * 100;
+      setProgress(Math.min(percent, 99));
     };
 
     // 监听页面完成
@@ -70,31 +71,40 @@ export default function SmartLoader({
 
   return (
     <>
-      {/* 顶部进度条 */}
-      <motion.div
-        className="fixed top-0 left-0 h-1 bg-blue-500 z-[100]"
-        style={{ width: '100%' }}
-        initial={{ scaleX: 0, transformOrigin: 'left' }}
-        animate={{ scaleX: progress / 100 }}
-        transition={{ duration: 0.3 }}
-      />
-
-      {/* 中间 Loading 动画遮罩 */}
+      {/* 进度条随遮罩一起消失 */}
       <AnimatePresence>
         {isLoading && (
-          <motion.div
-            className="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center"
-            initial={{ opacity: 1 }}
-            exit={{ 
-              opacity: 0,
-              transition: { duration: 0.4 }
-            }}
-          >
-            <LoadingSpinner />
-            <p className="mt-4 text-sm text-gray-400 font-medium">
-              {Math.round(progress)}%
-            </p>
-          </motion.div>
+          <>
+            {/* 顶部进度条 */}
+            <motion.div
+              className="fixed top-0 left-0 h-1 bg-blue-500 z-[100]"
+              style={{ width: '100%' }}
+              initial={{ scaleX: 0, transformOrigin: 'left' }}
+              animate={{ 
+                scaleX: Math.max(0.02, progress / 100) // 至少显示一点点
+              }}
+              exit={{ 
+                opacity: 0,
+                transition: { duration: 0.3 }
+              }}
+              transition={{ duration: 0.2 }}
+            />
+
+            {/* 中间 Loading 动画遮罩 */}
+            <motion.div
+              className="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center"
+              initial={{ opacity: 1 }}
+              exit={{ 
+                opacity: 0,
+                transition: { duration: 0.4 }
+              }}
+            >
+              <LoadingSpinner />
+              <p className="mt-4 text-sm text-gray-400 font-medium">
+                {Math.round(Math.min(100, progress))}%
+              </p>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
       
